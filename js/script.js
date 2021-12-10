@@ -1,6 +1,12 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+const frames = 60;
+
+function main(){
+	
+	requestAnimationFrame(main);
+}
 
 function setup(){
 	resize();
