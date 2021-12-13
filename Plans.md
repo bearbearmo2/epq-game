@@ -68,3 +68,61 @@ Test on colour combinations and shapes
 ---
 
 # rough plan three
+
+---
+
+# detailed plan
+
+continued from plan two
+
+centered level
+
+no background only border or edges
+
+one square of border is the door
+
+player is a dot
+
+player can move horizontally and vertically not diagonal
+
+player moves one square at a time
+
+containers are shapes with one edge missing
+
+2 container sizes, small and large
+
+player can fit in any container
+
+3 container shapes, triangle, square, hexagon
+
+containers have different rules:
+
+	triangle can fit in anything (including self);
+
+	square can fit in square and hexagon;
+
+	hexagon only fits in hexagon;
+
+have to get small shape into its bigger shape to open door
+
+(relevent to later levels, shape does not matter only colour)
+
+squares blue
+
+triangles red
+
+hexagons yellow
+
+unrequired shapes coloured grey
+
+eventually add in different colours, e.g purple, orange, green
+
+only small shapes have secondary colours
+
+small shapes have to go into a container that is one of its basic colours
+
+e.g, purple can go into a red or blue container
+
+leave level through door starts next level
+
+at least 10 levels
