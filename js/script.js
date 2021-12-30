@@ -2,6 +2,8 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 const frames = 60;
+const currentLevel = new Level(1);
+
 
 function main(){
 	
