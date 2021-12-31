@@ -9,22 +9,26 @@ class Level{
 		this.data = levels[id];
 		this.name = this.data.name;
 		this.layout = this.data.layout;
-		this.height = layout.length;
-		this.width = layout[0].length;
 		this.level = this.parse();
-		console.log(this.level);
+		this.resize();
 	}
 
 	parse(){
 		let out = {};
-		let layout = this.layout.split("\n");
+		let layout = this.layout.split("\n").map(x => x.split(","));
+		this.height = layout.length;
+		this.width = layout[0].length;
 		for(let y = 0; y < layout.length; y++){
 			for(let x = 0; x < layout[y].length; x++){
 				if(layout[y][x] === "-") continue;
-				out[[x, y]] = blockData[layout[y][x]](x, y);
+				out[[x, y]] = blockData[layout[y][x]](x, y, this);
 			}
 		}
 		return out;
+	}
+
+	resize(){
+		this.size = Math.floor(canvas.width/Math.max(this.height, this.width));
 	}
 
 	update(){
@@ -40,7 +44,10 @@ class Level{
 }
 
 class Object{
-	constructor(x, y, size, direction, colour){
+	constructor(x, y, parent, size, direction, colour){
+		this.x = x;
+		this.y = y;
+		this.parent = parent;
 		this.size = size;
 		this.dir = direction;
 		this.col = colour;
@@ -51,30 +58,46 @@ class Object{
 	}
 
 	render(){
-
+		ctx.drawImage(this.image, (this.size * 4 + this.dir)*16, this.col*16, 16, 16, this.x * this.parent.size, this.y * this.parent.size, this.parent.size, this.parent.size);
 	}
 }                                        
 
 class Triangle extends Object{
-	constructor(x, y, size, direction, colour){
-		super(x, y, size, direction, colour);
+	constructor(x, y, parent, size, direction, colour){
+		super(x, y, parent, size, direction, colour);
+		this.image = new Image()
+		this.image.src = "images/triangle.png"
 	}
 }
 
 class Square extends Object{
-	constructor(x, y, size, direction, colour){
-		super(x, y, size, direction, colour);
+	constructor(x, y, parent, size, direction, colour){
+		super(x, y, parent, size, direction, colour);
+		this.image = new Image()
+		this.image.src = "images/square.png"
 	}
 }
 
 class Hexagon extends Object{
-	constructor(){
-		super();
+	constructor(x, y, parent, size, direction, colour){
+		super(x, y, parent, size, direction, colour);
+		this.image = new Image()
+		this.image.src = "images/hexagon.png"
 	}
 }
 
 class Player extends Object{
-	constructor(){
-		super();
+	constructor(x, y, parent){
+		super(x, y, parent);
+		this.image = new Image()
+		this.image.src = "images/player.png"
+	}
+
+	update(){
+		this.render();
+	}
+
+	render(){
+		ctx.drawImage(this.image, this.x * this.parent.size, this.y * this.parent.size, this.parent.size, this.parent.size);
 	}
 }
