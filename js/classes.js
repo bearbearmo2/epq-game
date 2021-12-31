@@ -21,7 +21,8 @@ class Level{
 		for(let y = 0; y < layout.length; y++){
 			for(let x = 0; x < layout[y].length; x++){
 				if(layout[y][x] === "-") continue;
-				out[[x, y]] = blockData[layout[y][x]](x, y, this);
+				let data = layout[y][x].split(".");
+				out[[x, y]] = blockData[data[0]](x, y, this, parseInt(data[1]), parseInt(data[2]));
 			}
 		}
 		return out;

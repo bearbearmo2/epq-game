@@ -1,8 +1,8 @@
 const levels = {
 	"1":{
 		name:"level1",
-		layout:`H,s,S,T
-h,P,-,t`,
+		layout:`H.0.0,s.0.1,S.2.1,T.0.0
+h.0.0,P,-,t.0.0`,
 	},
 	"2":{
 
@@ -10,11 +10,11 @@ h,P,-,t`,
 }
 
 const blockData = {
-	"s": (x, y, p) => new Square(x, y, p, 1, 0, 0),
-	"S": (x, y, p) => new Square(x, y, p, 0, 2, 0),
-	"h": (x, y, p) => new Hexagon(x, y, p, 1, 0, 0),
-	"H": (x, y, p) => new Hexagon(x, y, p, 0, 0, 0),
-	"t": (x, y, p) => new Triangle(x, y, p, 1, 0, 0),
-	"T": (x, y, p) => new Triangle(x, y, p, 0, 0, 0),
-	"P": (x, y, p) => new Player(x, y, p, 1, 1, 1),
+	"s": (x, y, p, d, c) => new Square(x, y, p, 1, d, c),
+	"S": (x, y, p, d, c) => new Square(x, y, p, 0, d, c),
+	"h": (x, y, p, d, c) => new Hexagon(x, y, p, 1, d, c),
+	"H": (x, y, p, d, c) => new Hexagon(x, y, p, 0, d, c),
+	"t": (x, y, p, d, c) => new Triangle(x, y, p, 1, d, c),
+	"T": (x, y, p, d, c) => new Triangle(x, y, p, 0, d, c),
+	"P": (x, y, p, d, c) => new Player(x, y, p, 1, d, c),
 }
