@@ -28,3 +28,10 @@ function resize(){
 window.addEventListener('resize', resize);
 window.addEventListener('load', setup);
 window.addEventListener("keydown", e => userInterface.input(e, "key"));
+window.addEventListener("touchstart", e => userInterface.input(e, "touch", "start"), false);
+window.addEventListener("touchend", e => userInterface.input(e, "touch", "end"), false);
+window.addEventListener("touchmove", e => userInterface.input(e, "touch", "move"), false);
+window.addEventListener("mousedown", e => userInterface.input(e, "mouse", "start"), false);
+window.addEventListener("mouseup", e => userInterface.input(e, "mouse", "end"), false);
+
+canvas.addEventListener("contextmenu", e => e.preventDefault());

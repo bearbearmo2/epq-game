@@ -2,9 +2,11 @@ class UI{
 	constructor(){
 		this.gamePlay = true;
 		this.menu = false;
+		this.touchInterface = {startPos:null, endPos:null, dir:null, dist:null}
 	}
 
-	input(event, type){
+	input(event, type, special = null){
+		event.preventDefault();
 		if(type === "key"){
 			if(this.gamePlay){
 				switch(event.key){
@@ -25,6 +27,42 @@ class UI{
 						currentLevel.player.collide(1);
 						break;
 					default:
+				}
+			}
+		} else if(type === "touch"){
+			if(special === "start") this.touchInterface.startPos = {x:event.touches[0].clientX, y:event.touches[0].clientY};
+			else if(special === "move") this.touchInterface.endPos = {x:event.touches[0].clientX, y:event.touches[0].clientY};
+			else if (special === "end"){
+				let xdis = this.touchInterface.endPos.x - this.touchInterface.startPos.x;
+				let ydis = this.touchInterface.endPos.y - this.touchInterface.startPos.y;
+				this.touchInterface.dist = Math.sqrt(xdis**2 + ydis ** 2);
+				if(Math.abs(xdis) < Math.abs(ydis)){
+					if(ydis < 0) this.touchInterface.dir = 0;
+					else this.touchInterface.dir = 1;
+				} else{
+					if(xdis < 0) this.touchInterface.dir = 3;
+					else this.touchInterface.dir = 2;
+				}
+				if(this.gamePlay){
+					if(this.touchInterface.dist > currentLevel.size) currentLevel.player.collide(this.touchInterface.dir);
+				}
+			}
+		}	else if(type === "mouse"){
+			if(special === "start") this.touchInterface.startPos = {x:event.x, y:event.y};
+			else if (special === "end"){
+				this.touchInterface.endPos = {x:event.x, y:event.y};
+				let xdis = this.touchInterface.endPos.x - this.touchInterface.startPos.x;
+				let ydis = this.touchInterface.endPos.y - this.touchInterface.startPos.y;
+				this.touchInterface.dist = Math.sqrt(xdis**2 + ydis ** 2);
+				if(Math.abs(xdis) < Math.abs(ydis)){
+					if(ydis < 0) this.touchInterface.dir = 0;
+					else this.touchInterface.dir = 1;
+				} else{
+					if(xdis < 0) this.touchInterface.dir = 3;
+					else this.touchInterface.dir = 2;
+				}
+				if(this.gamePlay){
+					if(this.touchInterface.dist > currentLevel.size) currentLevel.player.collide(this.touchInterface.dir);
 				}
 			}
 		}
@@ -117,11 +155,9 @@ class Object{
 			this.container.move(pos, dir);
 			this.x = this.container.x;
 			this.y = this.container.y;
-			//console.log(dir, this.container.dir)
 		} else{
 			delete this.parent.level[[this.x, this.y]];
 			this.parent.level[pos] = this;
-			//console.log(pos, this, this.parent.level[pos]);
 			this.x = pos[0];
 			this.y = pos[1];
 		}
@@ -199,7 +235,7 @@ class Player extends Object{
 				}
 			}
 		} else {
-			this.move(newPosition, dir);
+			if(newPosition[0] >= 0 && newPosition[1] >= 0 && newPosition[0] < this.parent.width && newPosition[1] < this.parent.height) this.move(newPosition, dir);
 		}
 	}
 
