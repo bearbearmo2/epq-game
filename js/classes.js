@@ -75,7 +75,9 @@ class Level{
 		this.data = levels[id];
 		this.name = this.data.name;
 		this.layout = this.data.layout;
+		this.exit = this.data.exit;
 		this.level = this.parse();
+		this.solved = true;
 		this.resize();
 	}
 
@@ -119,7 +121,19 @@ class Level{
 		ctx.fillRect(this.offsetLeft + this.width * this.size, this.offsetTop, this.border, this.height * this.size);
 		ctx.fillRect(this.offsetLeft - this.border, this.offsetTop - this.border, this.width * this.size + this.border*2, this.border);
 		ctx.fillRect(this.offsetLeft - this.border, this.offsetTop + this.height * this.size, this.width * this.size + this.border*2, this.border);
-
+		ctx.fillStyle = "#e43b44";
+		if(this.exit.dir){
+			ctx.fillRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size, this.border, this.size);
+		} else {
+			ctx.fillRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size, this.size, this.border);
+		}
+		if(this.solved){
+			if(this.exit.dir){
+				ctx.clearRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size + this.border, this.border + 1, this.size - this.border*2);
+			} else {
+				ctx.clearRect(this.offsetLeft + this.exit.x * this.size + this.border, this.offsetTop + this.exit.y * this.size, this.size - this.border*2, this.border + 1);
+			}
+		}
 	}
 }
 
@@ -142,25 +156,67 @@ class Object{
 		}
 	}
 
+	checkOpening(dir){
+		return (dir !== this.dir) && ((dir < 2 && this.dir < 2) || (dir > 1 && this.dir > 1));
+	}
+
 	move(pos, dir){
 		if(this.container){
-			if((dir !== this.container.dir) && (!this.container.container) && ((dir < 2 && this.container.dir < 2) || (dir > 1 && this.container.dir > 1))){
-				this.container.contains = null;
-				this.container = null;
-				this.parent.level[pos] = this;
-				this.x = pos[0];
-				this.y = pos[1];
+			let opening = this.container.checkOpening(dir);
+			if(opening){
+				let largeOpening = false;
+				if(this.container.container){
+					largeOpening = this.container.container.checkOpening(dir);
+				}
+				if(largeOpening){
+					this.container.contains = null;
+					this.container = null;
+					this.parent.level[pos] = this;
+		 			this.x = pos[0];
+		 			this.y = pos[1];
+				} else {
+					if(this.container.container) return;
+					this.container.contains = null;
+					this.container = null;
+					this.parent.level[pos] = this;
+		 			this.x = pos[0];
+		 			this.y = pos[1];
+				}
 				return;
-			} 
-			this.container.move(pos, dir);
-			this.x = this.container.x;
-			this.y = this.container.y;
-		} else{
+			} else {
+				this.container.move(pos, dir);
+				this.x = this.container.x;
+				this.y = this.container.y;
+			}
+		} else {
 			delete this.parent.level[[this.x, this.y]];
-			this.parent.level[pos] = this;
-			this.x = pos[0];
-			this.y = pos[1];
+		 	this.parent.level[pos] = this;
+		 	this.x = pos[0];
+		 	this.y = pos[1];
 		}
+		// if(this.container){
+		// 	let large = false;
+		// 	if(this.container.container){
+		// 		large = (dir !== this.container.container.dir) && ((dir < 2 && this.container.container.dir < 2) || (dir > 1 && this.container.container.dir > 1));
+		// 	}
+		// 	if((dir !== this.container.dir) && ((dir < 2 && this.container.dir < 2) || (dir > 1 && this.container.dir > 1))){
+		// 		this.container.contains = null;
+		// 		this.container = null;
+		// 		this.parent.level[pos] = this;
+		// 		this.x = pos[0];
+		// 		this.y = pos[1];
+		// 		return false;
+		// 	} 
+		// 	if(!large) this.container.move(pos, dir);
+		// 	this.x = this.container.x;
+		// 	this.y = this.container.y;
+		// } else{
+		// 	delete this.parent.level[[this.x, this.y]];
+		// 	this.parent.level[pos] = this;
+		// 	this.x = pos[0];
+		// 	this.y = pos[1];
+		// }
+		// return true;
 	}
 
 	render(){
@@ -220,14 +276,26 @@ class Player extends Object{
 			let newContainer = this.parent.level[newPosition];
 			if(dir === newContainer.dir){
 				if(!this.container){
-					this.move(newPosition, dir);
-					this.container = newContainer;
-					this.container.contains = this;
-					this.move(newPosition, dir);
-				} else if(this.container.container){
+					if(newContainer.contains){
+						this.move(newPosition, dir);
+						this.container = newContainer.contains;
+						this.container.contains = this;
+						this.move(newPosition, dir);
+					} else {
+						this.move(newPosition, dir);
+						this.container = newContainer;
+						this.container.contains = this;
+						this.move(newPosition, dir);
+					}
+				} else if(this.container.container || newContainer.contains){
 					return;
 				}
 				else if(newContainer.size < this.container.size){
+					if(this.container instanceof Hexagon){
+						if(!(newContainer instanceof Hexagon)) return;
+					} else if(this.container instanceof Square){
+						if(newContainer instanceof Triangle) return;
+					}
 					this.move(newPosition, dir);
 					newContainer.contains = this.container;
 					this.container.container = newContainer;

@@ -1,8 +1,10 @@
 const levels = {
 	"1":{
 		name:"level1",
-		layout:`H.0.0,s.0.1,S.2.1,T.0.0
-h.3.0,P,-,-`,
+		layout:`S.0.0,s.0.1,S.2.1,T.0.0
+s.0.0,P,-,-
+-,-,-,-`,
+		exit:{x:3, y:2, dir:0},
 	},
 	"2":{
 
