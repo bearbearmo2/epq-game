@@ -4,6 +4,8 @@ const ctx = canvas.getContext("2d");
 const frames = 60;
 const currentLevel = new Level(1);
 
+const userInterface = new UI();
+
 
 function main(){
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -25,3 +27,4 @@ function resize(){
 
 window.addEventListener('resize', resize);
 window.addEventListener('load', setup);
+window.addEventListener("keydown", e => userInterface.input(e, "key"));
