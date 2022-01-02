@@ -1,13 +1,22 @@
 const levels = {
 	"1":{
 		name:"level1",
-		layout:`S.0.0,s.0.1,S.2.1,T.0.0
-s.0.0,P,-,-
--,-,-,-`,
-		exit:{x:3, y:2, dir:0},
+		layout:`P,-,s.2.1.1,S.2.1.1`,
+		exit:{x:3, y:1, dir:0},
 	},
 	"2":{
-
+		name:"level2",
+		layout:
+`P,-,-,S.2.1.1
+s.1.1.1,-,-,-`,
+		exit:{x:4, y:1, dir:1},
+	},
+	"3":{
+		name:"level2",
+		layout:
+`P,s.2.0,-,S.2.1.1
+-,-,s.2.1.1,-`,
+		exit:{x:4, y:1, dir:1},
 	},
 }
 

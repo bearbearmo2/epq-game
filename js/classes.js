@@ -2,7 +2,215 @@ class UI{
 	constructor(){
 		this.gamePlay = true;
 		this.menu = false;
+		this.transition = false;
+		this.loadedLevels = {};
+		this.display = [];
 		this.touchInterface = {startPos:null, endPos:null, dir:null, dist:null}
+		this.start = null;
+		this.tick = 0;
+		this.opacity = 1;
+		this.buttons = {};
+		this.activeButtons = {};
+	}
+
+	update(){
+		this.currentLevel.update();
+		if(this.gamePlay) this.gamePlayUI();
+		else if(this.menu) this.menuUI();
+		else if(this.transition) this.clearUI();
+		this.render();
+		if(this.display.length) this[this.display[0]]();
+		this.tick++;
+	}
+
+	gamePlayUI(){
+		if(this.level - 1 in this.loadedLevels) {
+			if(!(this.buttons.leftButton in this.activeButtons)){
+				this.activeButtons.leftButton = this.buttons.leftButton;
+			}
+		} else{
+			if(this.buttons.leftButton in this.activeButtons){
+				delete this.activeButtons.leftButton;
+			}
+		}
+		if(this.level + 1 in this.loadedLevels) {
+			if(!(this.buttons.rightButton in this.activeButtons)){
+				this.activeButtons.rightButton = this.buttons.rightButton;
+			}
+		} else{
+			if(this.buttons.rightButton in this.activeButtons){
+				delete this.activeButtons.rightButton;
+			}
+		}
+		if(!(this.buttons.resetButton in this.activeButtons)){
+				this.activeButtons.resetButton = this.buttons.resetButton;
+		}
+	}
+
+	clearUI(){
+		this.activeButtons = {};
+	}
+
+	checkHover(button, position){
+		return position.x > button.x && position.x < button.x + button.width && position.y > button.y && position.y < button.y + button.height;
+	}
+
+	hover(button){
+		if(!button.hover){
+			button.x -= button.width * 0.1;
+			button.y -= button.height * 0.1;
+			button.width *= 1.2;
+			button.height *= 1.2;
+			button.hover = true;
+		}
+	}
+
+	unhover(button){
+		if(button.hover){
+			button.width /= 1.2;
+			button.height /= 1.2;
+			button.x += button.width * 0.1;
+			button.y += button.height * 0.1;
+			button.hover = false;
+		}
+	}
+
+	resize(){
+		this.buttons.leftButton = {
+			image: new Image(),
+			width: screen.width/10,
+			height: screen.width/10,
+			x: screen.offsetLeft + screen.width/50,
+			y: canvas.height - canvas.height/10 - screen.width/20,
+			function: () => {userInterface.previousLevel()},
+		}
+		this.buttons.leftButton.image.src = "images/leftButton.png";
+
+		this.buttons.rightButton = {
+			image: new Image(),
+			width: screen.width/10,
+			height: screen.width/10,
+			x: screen.offsetLeft + screen.width - screen.width/10 - screen.width/50,
+			y: canvas.height - canvas.height/10 - screen.width/20,
+			function: () => {userInterface.nextLevel()},
+		}
+		this.buttons.rightButton.image.src = "images/rightButton.png";
+
+		this.buttons.resetButton = {
+			image: new Image(),
+			width: screen.width/10,
+			height: screen.width/10,
+			x: screen.offsetLeft + screen.width/2 - screen.width/20,
+			y: canvas.height - canvas.height/10 - screen.width/20,
+			function: () => {userInterface.currentLevel.reset()},
+		}
+		this.buttons.resetButton.image.src = "images/resetButton.png";
+
+		this.currentLevel.resize();
+	}
+
+	nextLevel(){
+		this.display = ["stopGamePlay", "startTransition", "fadeout", "increaseLevel", "loadLevel", "blackout", "fadein", "stopTransition", "startGamePlay"];
+	}
+
+	previousLevel(){
+		this.display = ["stopGamePlay", "startTransition", "fadeout", "decreaseLevel", "loadLevel", "blackout", "fadein", "stopTransition", "startGamePlay"];
+	}
+
+	increaseLevel(){
+		this.level++;
+		this.blackout();
+		this.endDisplay();
+	}
+
+	decreaseLevel(){
+		this.level--;
+		this.blackout();
+		this.endDisplay();
+	}
+
+	fadeout(){
+		if(!this.start) {
+			this.start = this.tick;
+			this.opacity = 0;
+		}
+		this.opacity += 0.0055;
+		ctx.fillStyle = "#000";
+		ctx.globalAlpha = this.opacity;
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.globalAlpha = 1;
+		if(this.tick - this.start >= 180){
+			this.start = null;
+			this.endDisplay();
+			this.opacity = 1;
+		}
+	}
+
+	fadein(){
+		if(!this.start) {
+			this.start = this.tick;
+			this.opacity = 1;
+		}
+		this.opacity -= 0.0055;
+		ctx.fillStyle = "#000";
+		ctx.globalAlpha = this.opacity;
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.globalAlpha = 1;
+		if(this.tick - this.start >= 180){
+			this.start = null;
+			this.endDisplay();
+			this.opacity = 1;
+		}
+	}
+
+	startGamePlay(){
+		this.gamePlay = true;
+		this.endDisplay();
+	}
+
+	stopGamePlay(){
+		this.gamePlay = false;
+		this.endDisplay();
+	}
+
+	startTransition(){
+		this.transition = true;
+		this.endDisplay();
+	}
+
+	stopTransition(){
+		this.transition = false;
+		this.endDisplay();
+	}
+
+	blackout(){
+		if(!this.start) {
+			this.start = this.tick;
+		}
+		ctx.fillStyle = "#000";
+		ctx.globalAlpha = this.opacity;
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.globalAlpha = 1;
+		if(this.tick - this.start >= 60){
+			this.start = null;
+			this.endDisplay();
+		}
+	}
+
+	loadLevel(){
+		if(this.level in this.loadedLevels){
+			this.currentLevel = this.loadedLevels[this.level];
+			this.currentLevel.reset();
+		} else{
+			this.currentLevel = new Level(this.level);
+			this.loadedLevels[this.level] = this.currentLevel;
+		}
+		this.blackout();
+		this.endDisplay();
+	}
+
+	endDisplay(){
+		this.display.shift();
 	}
 
 	input(event, type, special = null){
@@ -12,26 +220,59 @@ class UI{
 				switch(event.key){
 					case "ArrowLeft":
 					case "a":
-						currentLevel.player.collide(3);
+						this.currentLevel.player.collide(3);
 						break;
 					case "ArrowRight":
 					case "d":
-						currentLevel.player.collide(2);
+						this.currentLevel.player.collide(2);
 						break;
 					case "ArrowUp":
 					case "w":
-						currentLevel.player.collide(0);
+						this.currentLevel.player.collide(0);
 						break;
 					case "ArrowDown":
 					case "s":
-						currentLevel.player.collide(1);
+						this.currentLevel.player.collide(1);
+						break;
+					case "Escape":
+						this.display = ["stopGamePlay", "OpenMenu", "displayMenu"];
+						break;
+					case " ":
+						this.currentLevel.reset();
+						break;
+					default:
+				}
+			} else if(this.menu){
+				switch(event.key){
+					case "Escape":
+						this.display = ["closeMenu", "startGamePlay"];
 						break;
 					default:
 				}
 			}
 		} else if(type === "touch"){
-			if(special === "start") this.touchInterface.startPos = {x:event.touches[0].clientX, y:event.touches[0].clientY};
-			else if(special === "move") this.touchInterface.endPos = {x:event.touches[0].clientX, y:event.touches[0].clientY};
+			if(special === "start") {
+				this.touchInterface.startPos = {x:event.touches[0].clientX, y:event.touches[0].clientY};
+				this.touchInterface.endPos = {x:event.touches[0].clientX, y:event.touches[0].clientY};
+				for(let button in this.activeButtons){
+					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
+					if(over){
+						this.hover(this.activeButtons[button]);
+					} else if(this.activeButtons[button].hover){
+						this.unhover(this.activeButtons[button]);
+					}
+				}
+			} else if(special === "move") {
+				this.touchInterface.endPos = {x:event.touches[0].clientX, y:event.touches[0].clientY};
+				for(let button in this.activeButtons){
+					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
+					if(over){
+						this.hover(this.activeButtons[button]);
+					} else if(this.activeButtons[button].hover){
+						this.unhover(this.activeButtons[button]);
+					}
+				}
+			}
 			else if (special === "end"){
 				let xdis = this.touchInterface.endPos.x - this.touchInterface.startPos.x;
 				let ydis = this.touchInterface.endPos.y - this.touchInterface.startPos.y;
@@ -43,12 +284,41 @@ class UI{
 					if(xdis < 0) this.touchInterface.dir = 3;
 					else this.touchInterface.dir = 2;
 				}
+				for(let button in this.activeButtons){
+					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
+					if(over){
+						this.unhover(this.activeButtons[button]);
+						this.activeButtons[button].function();
+						return;
+					} 
+				}
 				if(this.gamePlay){
-					if(this.touchInterface.dist > currentLevel.size) currentLevel.player.collide(this.touchInterface.dir);
+					if(this.touchInterface.dist > this.currentLevel.size) this.currentLevel.player.collide(this.touchInterface.dir);
 				}
 			}
 		}	else if(type === "mouse"){
-			if(special === "start") this.touchInterface.startPos = {x:event.x, y:event.y};
+			if(special === "start") {
+				this.touchInterface.startPos = {x:event.x, y:event.y};
+				this.touchInterface.endPos = {x:event.x, y:event.y};
+				for(let button in this.activeButtons){
+					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
+					if(over){
+						this.hover(this.activeButtons[button]);
+					} else if(this.activeButtons[button].hover){
+						this.unhover(this.activeButtons[button]);
+					}
+				}
+			} else if (special === "move") {
+				this.touchInterface.endPos = {x:event.x, y:event.y};
+				for(let button in this.activeButtons){
+					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
+					if(over){
+						this.hover(this.activeButtons[button]);
+					} else if(this.activeButtons[button].hover){
+						this.unhover(this.activeButtons[button]);
+					}
+				}
+			}
 			else if (special === "end"){
 				this.touchInterface.endPos = {x:event.x, y:event.y};
 				let xdis = this.touchInterface.endPos.x - this.touchInterface.startPos.x;
@@ -61,10 +331,25 @@ class UI{
 					if(xdis < 0) this.touchInterface.dir = 3;
 					else this.touchInterface.dir = 2;
 				}
+				for(let button in this.activeButtons){
+					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
+					if(over){
+						this.unhover(this.activeButtons[button]);
+						this.activeButtons[button].function();
+						return;
+					} 
+				}
 				if(this.gamePlay){
-					if(this.touchInterface.dist > currentLevel.size) currentLevel.player.collide(this.touchInterface.dir);
+					if(this.touchInterface.dist > this.currentLevel.size) this.currentLevel.player.collide(this.touchInterface.dir);
 				}
 			}
+		}
+	}
+
+	render(){
+		for(let button in this.activeButtons){
+			let image = this.activeButtons[button];
+			ctx.drawImage(image.image, image.x, image.y, image.width, image.height);
 		}
 	}
 }
@@ -77,7 +362,7 @@ class Level{
 		this.layout = this.data.layout;
 		this.exit = this.data.exit;
 		this.level = this.parse();
-		this.solved = true;
+		this.solved = false;
 		this.resize();
 	}
 
@@ -96,16 +381,17 @@ class Level{
 				}
 				let data = layout[y][x].split(".");
 				out[[x, y]] = blockData[data[0]](x, y, this, parseInt(data[1]), parseInt(data[2]));
+				if(data[3]) out[[x, y]].required = true;
 			}
 		}
 		return out;
 	}
 
 	resize(){
-		this.border = canvas.width/50;
-		this.size = Math.floor((canvas.width - this.border*2)/Math.max(this.height, this.width));
-		this.offsetTop = Math.floor((canvas.height - this.height * this.size)/2);
-		this.offsetLeft = Math.floor((canvas.width - this.width * this.size)/2);
+		this.border = screen.width/50;
+		this.size = Math.floor((screen.width - this.border*2)/Math.max(this.height, this.width));
+		this.offsetTop = Math.floor((screen.height - this.height * this.size)/2) + screen.offsetTop;
+		this.offsetLeft = Math.floor((screen.width - this.width * this.size)/2) + screen.offsetLeft;
 	}
 
 	update(){
@@ -113,6 +399,15 @@ class Level{
 			this.level[tile].update();
 		}
 		this.render();
+	}
+
+	finish(){
+		userInterface.nextLevel();
+	}
+
+	reset(){
+		this.level = this.parse();
+		this.solved = false;
 	}
 
 	render(){
@@ -125,14 +420,14 @@ class Level{
 		if(this.exit.dir){
 			ctx.fillRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size, this.border, this.size);
 		} else {
-			ctx.fillRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size, this.size, this.border);
+			ctx.fillRect(this.offsetLeft + this.exit.x * this.size + this.border, this.offsetTop + this.exit.y * this.size, this.size - this.border, this.border);
 		}
 		if(this.solved){
 			if(this.exit.dir){
-				ctx.clearRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size + this.border, this.border + 1, this.size - this.border*2);
-			} else {
-				ctx.clearRect(this.offsetLeft + this.exit.x * this.size + this.border, this.offsetTop + this.exit.y * this.size, this.size - this.border*2, this.border + 1);
-			}
+			ctx.clearRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size, this.border+1, this.size);
+		} else {
+			ctx.clearRect(this.offsetLeft + this.exit.x * this.size + this.border, this.offsetTop + this.exit.y * this.size, this.size - this.border, this.border+1);
+		}
 		}
 	}
 }
@@ -145,6 +440,8 @@ class Object{
 		this.size = size;
 		this.dir = direction;
 		this.col = colour;
+		this.image = new Image()
+		this.required = false;
 		this.container = null;
 		this.contains = null;
 	}
@@ -200,7 +497,6 @@ class Object{
 class Triangle extends Object{
 	constructor(x, y, parent, size, direction, colour){
 		super(x, y, parent, size, direction, colour);
-		this.image = new Image()
 		this.image.src = "images/triangle.png"
 	}
 }
@@ -208,7 +504,6 @@ class Triangle extends Object{
 class Square extends Object{
 	constructor(x, y, parent, size, direction, colour){
 		super(x, y, parent, size, direction, colour);
-		this.image = new Image()
 		this.image.src = "images/square.png"
 	}
 }
@@ -216,7 +511,6 @@ class Square extends Object{
 class Hexagon extends Object{
 	constructor(x, y, parent, size, direction, colour){
 		super(x, y, parent, size, direction, colour);
-		this.image = new Image()
 		this.image.src = "images/hexagon.png"
 	}
 }
@@ -224,8 +518,8 @@ class Hexagon extends Object{
 class Player extends Object{
 	constructor(x, y, parent){
 		super(x, y, parent);
-		this.image = new Image()
 		this.image.src = "images/player.png"
+		this.required = true;
 	}
 
 	collide(dir){
@@ -273,10 +567,15 @@ class Player extends Object{
 					newContainer.contains = this.container;
 					this.container.container = newContainer;
 					this.move(newPosition, dir);
+					if(this.container.container.required && this.container.required) this.parent.solved = true;
 				}
 			}
 		} else {
 			if(newPosition[0] >= 0 && newPosition[1] >= 0 && newPosition[0] < this.parent.width && newPosition[1] < this.parent.height) this.move(newPosition, dir);
+			if(this.parent.solved && newPosition[0] === this.parent.exit.x && newPosition[1] === this.parent.exit.y) {
+				this.move(newPosition, dir);
+				this.parent.finish();
+			}
 		}
 	}
 
