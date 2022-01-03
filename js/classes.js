@@ -11,6 +11,30 @@ class UI{
 		this.opacity = 1;
 		this.buttons = {};
 		this.activeButtons = {};
+		this.buttons.leftButton = new Button("images/leftButton.png", () => {userInterface.previousLevel()}, (button) => {
+			button.width = screen.width/10;
+			button.height = screen.width/10;
+			button.x = screen.offsetLeft + screen.width/50;
+			button.y = screen.height + screen.offsetTop - (screen.width/20)*3;
+		});
+		this.buttons.rightButton = new Button("images/rightButton.png", () => {userInterface.nextLevel()}, (button) => {
+			button.width = screen.width/10;
+			button.height = screen.width/10;
+			button.x = screen.offsetLeft + screen.width - screen.width/10 - screen.width/50;
+			button.y = screen.height + screen.offsetTop - (screen.width/20)*3;
+		});
+		this.buttons.resetButton = new Button("images/resetButton.png", () => {userInterface.currentLevel.reset()}, (button) => {
+			button.width = screen.width/10;
+			button.height = screen.width/10;
+			button.x = screen.offsetLeft + screen.width/2 - screen.width/50;
+			button.y = screen.height + screen.offsetTop - (screen.width/20)*3;
+		});
+		this.buttons.menuButton = new Button("images/menuButton.png", () => {}, (button) => {
+			button.width = screen.width/10;
+			button.height = screen.width/10;
+			button.x = screen.offsetLeft + screen.width/50;
+			button.y = screen.offsetTop + screen.width/20;
+		});
 	}
 
 	update(){
@@ -25,25 +49,32 @@ class UI{
 
 	gamePlayUI(){
 		if(this.level - 1 in this.loadedLevels) {
-			if(!(this.buttons.leftButton in this.activeButtons)){
+			if(!("leftButton" in this.activeButtons)){
 				this.activeButtons.leftButton = this.buttons.leftButton;
+				this.activeButtons.leftButton.resize(this.activeButtons.leftButton);
 			}
 		} else{
-			if(this.buttons.leftButton in this.activeButtons){
+			if("leftButton" in this.activeButtons){
 				delete this.activeButtons.leftButton;
 			}
 		}
 		if(this.level + 1 in this.loadedLevels) {
-			if(!(this.buttons.rightButton in this.activeButtons)){
+			if(!("rightButton" in this.activeButtons)){
 				this.activeButtons.rightButton = this.buttons.rightButton;
+				this.activeButtons.rightButton.resize(this.activeButtons.rightButton);
 			}
 		} else{
-			if(this.buttons.rightButton in this.activeButtons){
+			if("rightButton" in this.activeButtons){
 				delete this.activeButtons.rightButton;
 			}
 		}
-		if(!(this.buttons.resetButton in this.activeButtons)){
-				this.activeButtons.resetButton = this.buttons.resetButton;
+		if(!("resetButton" in this.activeButtons)){
+			this.activeButtons.resetButton = this.buttons.resetButton;
+			this.activeButtons.resetButton.resize(this.activeButtons.resetButton);
+		}
+		if(!("menuButton" in this.activeButtons)){
+			this.activeButtons.menuButton = this.buttons.menuButton;
+			this.activeButtons.menuButton.resize(this.activeButtons.menuButton);
 		}
 	}
 
@@ -55,56 +86,10 @@ class UI{
 		return position.x > button.x && position.x < button.x + button.width && position.y > button.y && position.y < button.y + button.height;
 	}
 
-	hover(button){
-		if(!button.hover){
-			button.x -= button.width * 0.1;
-			button.y -= button.height * 0.1;
-			button.width *= 1.2;
-			button.height *= 1.2;
-			button.hover = true;
-		}
-	}
-
-	unhover(button){
-		if(button.hover){
-			button.width /= 1.2;
-			button.height /= 1.2;
-			button.x += button.width * 0.1;
-			button.y += button.height * 0.1;
-			button.hover = false;
-		}
-	}
-
 	resize(){
-		this.buttons.leftButton = {
-			image: new Image(),
-			width: screen.width/10,
-			height: screen.width/10,
-			x: screen.offsetLeft + screen.width/50,
-			y: canvas.height - canvas.height/10 - screen.width/20,
-			function: () => {userInterface.previousLevel()},
+		for(let button in this.activeButtons){
+			this.activeButtons[button].resize(this.activeButtons[button]);
 		}
-		this.buttons.leftButton.image.src = "images/leftButton.png";
-
-		this.buttons.rightButton = {
-			image: new Image(),
-			width: screen.width/10,
-			height: screen.width/10,
-			x: screen.offsetLeft + screen.width - screen.width/10 - screen.width/50,
-			y: canvas.height - canvas.height/10 - screen.width/20,
-			function: () => {userInterface.nextLevel()},
-		}
-		this.buttons.rightButton.image.src = "images/rightButton.png";
-
-		this.buttons.resetButton = {
-			image: new Image(),
-			width: screen.width/10,
-			height: screen.width/10,
-			x: screen.offsetLeft + screen.width/2 - screen.width/20,
-			y: canvas.height - canvas.height/10 - screen.width/20,
-			function: () => {userInterface.currentLevel.reset()},
-		}
-		this.buttons.resetButton.image.src = "images/resetButton.png";
 
 		this.currentLevel.resize();
 	}
@@ -257,9 +242,9 @@ class UI{
 				for(let button in this.activeButtons){
 					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
 					if(over){
-						this.hover(this.activeButtons[button]);
-					} else if(this.activeButtons[button].hover){
-						this.unhover(this.activeButtons[button]);
+						this.activeButtons[button].hover();
+					} else if(this.activeButtons[button].hovered){
+						this.activeButtons[button].unhover();
 					}
 				}
 			} else if(special === "move") {
@@ -267,9 +252,9 @@ class UI{
 				for(let button in this.activeButtons){
 					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
 					if(over){
-						this.hover(this.activeButtons[button]);
-					} else if(this.activeButtons[button].hover){
-						this.unhover(this.activeButtons[button]);
+						this.activeButtons[button].hover;
+					} else if(this.activeButtons[button].hovered){
+						this.activeButtons[button].unhover();
 					}
 				}
 			}
@@ -287,7 +272,7 @@ class UI{
 				for(let button in this.activeButtons){
 					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
 					if(over){
-						this.unhover(this.activeButtons[button]);
+						this.activeButtons[button].unhover();
 						this.activeButtons[button].function();
 						return;
 					} 
@@ -303,9 +288,9 @@ class UI{
 				for(let button in this.activeButtons){
 					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
 					if(over){
-						this.hover(this.activeButtons[button]);
-					} else if(this.activeButtons[button].hover){
-						this.unhover(this.activeButtons[button]);
+						this.activeButtons[button].hover;
+					} else if(this.activeButtons[button].hovered){
+						this.activeButtons[button].unhover;
 					}
 				}
 			} else if (special === "move") {
@@ -313,9 +298,9 @@ class UI{
 				for(let button in this.activeButtons){
 					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
 					if(over){
-						this.hover(this.activeButtons[button]);
-					} else if(this.activeButtons[button].hover){
-						this.unhover(this.activeButtons[button]);
+						this.activeButtons[button].hover();
+					} else if(this.activeButtons[button].hovered){
+						this.activeButtons[button].unhover();
 					}
 				}
 			}
@@ -334,7 +319,7 @@ class UI{
 				for(let button in this.activeButtons){
 					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
 					if(over){
-						this.unhover(this.activeButtons[button]);
+						this.activeButtons[button].unhover();
 						this.activeButtons[button].function();
 						return;
 					} 
@@ -350,6 +335,41 @@ class UI{
 		for(let button in this.activeButtons){
 			let image = this.activeButtons[button];
 			ctx.drawImage(image.image, image.x, image.y, image.width, image.height);
+		}
+	}
+}
+
+class Button{
+	constructor(src, proceedure, resize){
+		this.x = 1;
+		this.y = 1;
+		this.width = 1;
+		this.height = 1;
+		this.image = new Image();
+		this.image.src = src;
+		this.function = proceedure;
+		this.resize = resize;
+		this.resize(this);
+		this.hovered = false;
+	}
+
+	hover(){
+		if(!this.hovered){
+			this.x -= this.width * 0.1;
+			this.y -= this.height * 0.1;
+			this.width *= 1.2;
+			this.height *= 1.2;
+			this.hovered = true;
+		}
+	}
+
+	unhover(){
+		if(this.hovered){
+			this.width /= 1.2;
+			this.height /= 1.2;
+			this.x += this.width * 0.1;
+			this.y += this.height * 0.1;
+			this.hovered = false;
 		}
 	}
 }
