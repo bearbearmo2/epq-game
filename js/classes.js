@@ -2,7 +2,9 @@ class UI{
 	constructor(){
 		this.gamePlay = true;
 		this.menu = false;
+		this.menuWorld = false;
 		this.transition = false;
+		this.fullscreen = false;
 		this.loadedLevels = {};
 		this.display = [];
 		this.touchInterface = {startPos:null, endPos:null, dir:null, dist:null}
@@ -29,12 +31,82 @@ class UI{
 			button.x = screen.offsetLeft + screen.width/2 - screen.width/50;
 			button.y = screen.height + screen.offsetTop - (screen.width/20)*3;
 		});
-		this.buttons.menuButton = new Button("images/menuButton.png", () => {}, (button) => {
+		this.buttons.menuButton = new Button("images/menuButton.png", () => {
+			if(userInterface.menu) userInterface.closeMenu();
+			else userInterface.openMenu();
+		}, (button) => {
 			button.width = screen.width/10;
 			button.height = screen.width/10;
 			button.x = screen.offsetLeft + screen.width/50;
 			button.y = screen.offsetTop + screen.width/20;
 		});
+		this.buttons.fullScreenButton = new Button("images/fullScreenButton.png", (button) => {
+			if(userInterface.fullscreen) {
+				button.image.src = "images/fullScreenButton.png";
+				userInterface.exitFullscreen();
+			}
+			else {
+				button.image.src = "images/smallScreenButton.png";
+				userInterface.enterFullscreen();
+			}
+		}, (button) => {
+			button.width = screen.width/10;
+			button.height = screen.width/10;
+			button.x = screen.offsetLeft + screen.width - screen.width/10 - screen.width/50;
+			button.y = screen.offsetTop + screen.width/20;
+		});
+
+		this.buttons.settingsButton = new Button("images/settingsButton.png", (button) => {
+			if(userInterface.settings) {
+				userInterface.exitFullscreen();
+			}
+			else {
+				userInterface.enterFullscreen();
+			}
+		}, (button) => {
+			button.width = screen.width/10;
+			button.height = screen.width/10;
+			button.x = screen.offsetLeft + screen.width/2 - screen.width/20;
+			button.y = screen.offsetTop + screen.width/20;
+		});
+
+		this.buttons.backButton = new Button("images/leftButton.png", (button) => {
+			userInterface.menuWorld = false;
+		}, (button) => {
+			button.width = screen.width/10;
+			button.height = screen.width/10;
+			button.x = screen.offsetLeft + screen.width/2 - screen.width/20;
+			button.y = screen.offsetTop + screen.width/20;
+		});
+
+		this.createWorldButtons();
+	}
+
+	createWorldButtons(){
+		for(let i = 1; i < 10; i++){
+			let world = levels[i];
+			if(world === undefined) continue;
+			for(let j = 0; j < world.length; j++){
+				this.buttons[[i,j]] = new Button(`images/num${j}.png`, (button) => {
+					this.world = i;
+					this.level = j;
+					this.display = ["stopMenu", "startTransition", "fadeout", "loadLevel", "blackout", "fadein", "stopTransition", "startGamePlay"];
+				}, (button) => {
+					button.width = screen.width/7.5;
+					button.height = screen.width/7.5;
+					button.x = screen.offsetLeft + (screen.width/2 * (j%3)) + screen.width/50 * ((j%3) ? ((j%3) - 1 ? -1 : 0) : 1) - (button.width/2) * (j%3);
+					button.y = screen.offsetTop + button.height * 2 * (Math.floor(j/3)+1);
+				});
+			}
+			this.buttons[i] = new Button(`images/num${i-1}.png`, (button) => {
+					this.menuWorld = i;
+				}, (button) => {
+					button.width = screen.width/7.5;
+					button.height = screen.width/7.5;
+					button.x = screen.offsetLeft + (screen.width/2 * ((i-1)%3)) + screen.width/50 * (((i-1)%3) ? (((i-1)%3) - 1 ? -1 : 0) : 1) - (button.width/2) * ((i-1)%3);
+					button.y = screen.offsetTop + button.height * 2 * (Math.floor((i-1)/3)+1);
+				});
+		}
 	}
 
 	update(){
@@ -48,7 +120,7 @@ class UI{
 	}
 
 	gamePlayUI(){
-		if(this.level - 1 in this.loadedLevels) {
+		if([this.world, this.level - 1] in this.loadedLevels || [this.world-1, 9] in this.loadedLevels) {
 			if(!("leftButton" in this.activeButtons)){
 				this.activeButtons.leftButton = this.buttons.leftButton;
 				this.activeButtons.leftButton.resize(this.activeButtons.leftButton);
@@ -58,7 +130,7 @@ class UI{
 				delete this.activeButtons.leftButton;
 			}
 		}
-		if(this.level + 1 in this.loadedLevels) {
+		if([this.world, this.level + 1] in this.loadedLevels || [this.world+1, 1] in this.loadedLevels) {
 			if(!("rightButton" in this.activeButtons)){
 				this.activeButtons.rightButton = this.buttons.rightButton;
 				this.activeButtons.rightButton.resize(this.activeButtons.rightButton);
@@ -76,6 +148,61 @@ class UI{
 			this.activeButtons.menuButton = this.buttons.menuButton;
 			this.activeButtons.menuButton.resize(this.activeButtons.menuButton);
 		}
+	}
+
+	menuUI(){
+		if(!("menuButton" in this.activeButtons)){
+			this.activeButtons.menuButton = this.buttons.menuButton;
+			this.activeButtons.menuButton.resize(this.activeButtons.menuButton);
+		}
+
+		if(!("fullScreenButton" in this.activeButtons)){
+			this.activeButtons.fullScreenButton = this.buttons.fullScreenButton;
+			this.activeButtons.fullScreenButton.resize(this.activeButtons.fullScreenButton);
+		}
+
+		if(this.menuWorld){
+			for(let button in this.activeButtons){
+				if(button.length === 1) delete this.activeButtons[button];
+			}
+			if("settingsButton" in this.activeButtons){
+				delete this.activeButtons.settingsButton;
+			}
+			if(!("backButton" in this.activeButtons)){
+				this.activeButtons.backButton = this.buttons.backButton;
+				this.activeButtons.backButton.resize(this.activeButtons.backButton);
+			}
+			for(let levelID in this.loadedLevels){
+				if(levelID[0] != this.menuWorld) continue;
+				if(!(levelID in this.activeButtons)){
+					this.activeButtons[levelID] = this.buttons[levelID];
+					this.activeButtons[levelID].resize(this.activeButtons[levelID]);
+				}
+			}
+		} else{
+			if(!("settingsButton" in this.activeButtons)){
+				this.activeButtons.settingsButton = this.buttons.settingsButton;
+				this.activeButtons.settingsButton.resize(this.activeButtons.settingsButton);
+			}
+			if("backButton" in this.activeButtons){
+				delete this.activeButtons.backButton;
+			}
+			for(let button in this.activeButtons){
+				if(button.length === 3) delete this.activeButtons[button];
+			}
+			let prev = null;
+			for(let levelID in this.loadedLevels){
+				if(levelID[0] === prev) continue;
+				else prev = levelID[0];
+				if(!(levelID[0] in this.activeButtons)){
+					this.activeButtons[levelID[0]] = this.buttons[levelID[0]];
+					this.activeButtons[levelID[0]].resize(this.activeButtons[levelID[0]]);
+				}
+			}
+		}
+
+		this.opacity = 0.8;
+		this.blackout();
 	}
 
 	clearUI(){
@@ -102,14 +229,42 @@ class UI{
 		this.display = ["stopGamePlay", "startTransition", "fadeout", "decreaseLevel", "loadLevel", "blackout", "fadein", "stopTransition", "startGamePlay"];
 	}
 
+	openMenu(){
+		this.menuWorld = false;
+		this.display = ["stopGamePlay", "startTransition", "stopTransition", "startMenu"];
+	}
+
+	closeMenu(){
+		console.log("close");
+		this.display = ["stopMenu", "startTransition", "stopTransition", "startGamePlay"];
+	}
+
+	enterFullscreen(){
+		document.body.requestFullscreen();
+		this.fullscreen = true;
+	}
+
+	exitFullscreen(){
+		document.exitFullscreen();
+		this.fullscreen = false;
+	}
+
 	increaseLevel(){
 		this.level++;
+		if(this.level >= levels[this.world].length){
+			this.world++;
+			this.level = 0;
+		}
 		this.blackout();
 		this.endDisplay();
 	}
 
 	decreaseLevel(){
 		this.level--;
+		if(this.level < 0){
+			this.world--;
+			this.level = levels[this.world].length - 1;
+		}
 		this.blackout();
 		this.endDisplay();
 	}
@@ -125,9 +280,7 @@ class UI{
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
 		ctx.globalAlpha = 1;
 		if(this.tick - this.start >= 180){
-			this.start = null;
 			this.endDisplay();
-			this.opacity = 1;
 		}
 	}
 
@@ -142,9 +295,7 @@ class UI{
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
 		ctx.globalAlpha = 1;
 		if(this.tick - this.start >= 180){
-			this.start = null;
 			this.endDisplay();
-			this.opacity = 1;
 		}
 	}
 
@@ -168,6 +319,16 @@ class UI{
 		this.endDisplay();
 	}
 
+	startMenu(){
+		this.menu = true;
+		this.endDisplay();
+	}
+
+	stopMenu(){
+		this.menu = false;
+		this.endDisplay();
+	}
+
 	blackout(){
 		if(!this.start) {
 			this.start = this.tick;
@@ -177,25 +338,50 @@ class UI{
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
 		ctx.globalAlpha = 1;
 		if(this.tick - this.start >= 60){
-			this.start = null;
 			this.endDisplay();
 		}
 	}
 
 	loadLevel(){
-		if(this.level in this.loadedLevels){
-			this.currentLevel = this.loadedLevels[this.level];
+		if([this.world, this.level] in this.loadedLevels){
+			this.currentLevel = this.loadedLevels[[this.world, this.level]];
 			this.currentLevel.reset();
+			this.currentLevel.resize();
 		} else{
-			this.currentLevel = new Level(this.level);
-			this.loadedLevels[this.level] = this.currentLevel;
+			this.currentLevel = new Level(this.world, this.level);
+			this.loadedLevels[[this.world, this.level]] = this.currentLevel;
 		}
 		this.blackout();
 		this.endDisplay();
 	}
 
 	endDisplay(){
+		this.start = null;
+		this.opacity = 1;
 		this.display.shift();
+	}
+
+	checkOverButton(position){
+		for(let button in this.activeButtons){
+			let over = this.checkHover(this.activeButtons[button], position);
+			if(over){
+				this.activeButtons[button].hover();
+			} else if(this.activeButtons[button].hovered){
+				this.activeButtons[button].unhover();
+			}
+		}
+	}
+
+	clickButton(position){
+		for(let button in this.activeButtons){
+			let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
+			if(over){
+				this.activeButtons[button].unhover();
+				this.activeButtons[button].function(this.activeButtons[button]);
+				return true;
+			} 
+		}
+		return false;
 	}
 
 	input(event, type, special = null){
@@ -219,44 +405,57 @@ class UI{
 					case "s":
 						this.currentLevel.player.collide(1);
 						break;
-					case "Escape":
-						this.display = ["stopGamePlay", "OpenMenu", "displayMenu"];
+					case "m":
+					case "e":
+						this.openMenu();
 						break;
 					case " ":
 						this.currentLevel.reset();
 						break;
-					default:
 				}
 			} else if(this.menu){
 				switch(event.key){
-					case "Escape":
-						this.display = ["closeMenu", "startGamePlay"];
+					case "1":
+					case "2":
+					case "3":
+					case "4":
+					case "5":
+					case "6":
+					case "7":
+					case "8":
+					case "9":
+						if(this.menuWorld){
+							console.log(event.key);
+							this.world = this.menuWorld;
+							this.level = parseInt(event.key);
+							console.log(this.world, this.level)
+							this.display = ["stopMenu", "startTransition", "fadeout", "loadLevel", "blackout", "fadein", "stopTransition", "startGamePlay"];
+						} else this.menuWorld = parseInt(event.key);
+						break;
+					case "m":
+					case "e":
+						this.closeMenu();
 						break;
 					default:
 				}
+			}
+			switch(event.key){
+				case "Escape":
+					if(this.fullscreen) this.exitFullscreen();
+					break;
+				case "F11":
+					if(this.fullscreen) this.exitFullscreen();
+					else this.enterFullscreen();
+				default:
 			}
 		} else if(type === "touch"){
 			if(special === "start") {
 				this.touchInterface.startPos = {x:event.touches[0].clientX, y:event.touches[0].clientY};
 				this.touchInterface.endPos = {x:event.touches[0].clientX, y:event.touches[0].clientY};
-				for(let button in this.activeButtons){
-					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
-					if(over){
-						this.activeButtons[button].hover();
-					} else if(this.activeButtons[button].hovered){
-						this.activeButtons[button].unhover();
-					}
-				}
+				this.checkOverButton(this.touchInterface.endPos);
 			} else if(special === "move") {
 				this.touchInterface.endPos = {x:event.touches[0].clientX, y:event.touches[0].clientY};
-				for(let button in this.activeButtons){
-					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
-					if(over){
-						this.activeButtons[button].hover;
-					} else if(this.activeButtons[button].hovered){
-						this.activeButtons[button].unhover();
-					}
-				}
+				this.checkOverButton(this.touchInterface.endPos);
 			}
 			else if (special === "end"){
 				let xdis = this.touchInterface.endPos.x - this.touchInterface.startPos.x;
@@ -269,40 +468,19 @@ class UI{
 					if(xdis < 0) this.touchInterface.dir = 3;
 					else this.touchInterface.dir = 2;
 				}
-				for(let button in this.activeButtons){
-					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
-					if(over){
-						this.activeButtons[button].unhover();
-						this.activeButtons[button].function();
-						return;
-					} 
-				}
+				if(this.clickButton(this.touchInterface.endPos)) return;
 				if(this.gamePlay){
-					if(this.touchInterface.dist > this.currentLevel.size) this.currentLevel.player.collide(this.touchInterface.dir);
+					if(this.touchInterface.dist > this.currentLevel.size/2) this.currentLevel.player.collide(this.touchInterface.dir);
 				}
 			}
 		}	else if(type === "mouse"){
 			if(special === "start") {
 				this.touchInterface.startPos = {x:event.x, y:event.y};
 				this.touchInterface.endPos = {x:event.x, y:event.y};
-				for(let button in this.activeButtons){
-					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
-					if(over){
-						this.activeButtons[button].hover;
-					} else if(this.activeButtons[button].hovered){
-						this.activeButtons[button].unhover;
-					}
-				}
+				this.checkOverButton(this.touchInterface.endPos);
 			} else if (special === "move") {
 				this.touchInterface.endPos = {x:event.x, y:event.y};
-				for(let button in this.activeButtons){
-					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
-					if(over){
-						this.activeButtons[button].hover();
-					} else if(this.activeButtons[button].hovered){
-						this.activeButtons[button].unhover();
-					}
-				}
+				this.checkOverButton(this.touchInterface.endPos);
 			}
 			else if (special === "end"){
 				this.touchInterface.endPos = {x:event.x, y:event.y};
@@ -316,16 +494,9 @@ class UI{
 					if(xdis < 0) this.touchInterface.dir = 3;
 					else this.touchInterface.dir = 2;
 				}
-				for(let button in this.activeButtons){
-					let over = this.checkHover(this.activeButtons[button], this.touchInterface.endPos);
-					if(over){
-						this.activeButtons[button].unhover();
-						this.activeButtons[button].function();
-						return;
-					} 
-				}
+				if(this.clickButton(this.touchInterface.endPos)) return;
 				if(this.gamePlay){
-					if(this.touchInterface.dist > this.currentLevel.size) this.currentLevel.player.collide(this.touchInterface.dir);
+					if(this.touchInterface.dist > this.currentLevel.size/2) this.currentLevel.player.collide(this.touchInterface.dir);
 				}
 			}
 		}
@@ -375,9 +546,10 @@ class Button{
 }
 
 class Level{
-	constructor(id){
+	constructor(world, id){
 		this.id = id;
-		this.data = levels[id];
+		this.world = world;
+		this.data = levels[this.world][this.id];
 		this.name = this.data.name;
 		this.layout = this.data.layout;
 		this.exit = this.data.exit;
@@ -440,13 +612,13 @@ class Level{
 		if(this.exit.dir){
 			ctx.fillRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size, this.border, this.size);
 		} else {
-			ctx.fillRect(this.offsetLeft + this.exit.x * this.size + this.border, this.offsetTop + this.exit.y * this.size, this.size - this.border, this.border);
+			ctx.fillRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size, this.size, this.border);
 		}
 		if(this.solved){
 			if(this.exit.dir){
 			ctx.clearRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size, this.border+1, this.size);
 		} else {
-			ctx.clearRect(this.offsetLeft + this.exit.x * this.size + this.border, this.offsetTop + this.exit.y * this.size, this.size - this.border, this.border+1);
+			ctx.clearRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size, this.size, this.border+1);
 		}
 		}
 	}

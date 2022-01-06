@@ -6,9 +6,10 @@ const screen = {offsetLeft:0, offsetTop:0, width:0, height:0};
 const frames = 60;
 
 const userInterface = new UI();
-userInterface.level = 1;
-userInterface.currentLevel = new Level(userInterface.level);
-userInterface.loadedLevels[userInterface.level] = userInterface.currentLevel;
+userInterface.level = 0;
+userInterface.world = 1;
+userInterface.currentLevel = new Level(userInterface.world, userInterface.level);
+userInterface.loadedLevels[[userInterface.world, userInterface.level]] = userInterface.currentLevel;
 userInterface.resize();
 
 function main(){
