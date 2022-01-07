@@ -235,7 +235,7 @@ class UI{
 	}
 
 	closeMenu(){
-		console.log("close");
+		this.menuWorld = false;
 		this.display = ["stopMenu", "startTransition", "stopTransition", "startGamePlay"];
 	}
 
@@ -427,7 +427,7 @@ class UI{
 						if(this.menuWorld){
 							console.log(event.key);
 							this.world = this.menuWorld;
-							this.level = parseInt(event.key);
+							this.level = parseInt(event.key)-1;
 							console.log(this.world, this.level)
 							this.display = ["stopMenu", "startTransition", "fadeout", "loadLevel", "blackout", "fadein", "stopTransition", "startGamePlay"];
 						} else this.menuWorld = parseInt(event.key);
@@ -581,9 +581,9 @@ class Level{
 
 	resize(){
 		this.border = screen.width/50;
-		this.size = Math.floor((screen.width - this.border*2)/Math.max(this.height, this.width));
-		this.offsetTop = Math.floor((screen.height - this.height * this.size)/2) + screen.offsetTop;
-		this.offsetLeft = Math.floor((screen.width - this.width * this.size)/2) + screen.offsetLeft;
+		this.size = Math.min(Math.floor((screen.display.width - this.border*2)/this.width), Math.floor((screen.display.height - this.border*2)/this.height));
+		this.offsetTop = Math.floor((screen.display.height - this.height * this.size)/2) + screen.display.offsetTop;
+		this.offsetLeft = Math.floor((screen.display.width - this.width * this.size)/2) + screen.display.offsetLeft;
 	}
 
 	update(){

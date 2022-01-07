@@ -1,7 +1,7 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const screen = {offsetLeft:0, offsetTop:0, width:0, height:0};
+const screen = {offsetLeft:0, offsetTop:0, width:0, height:0, display:{offsetLeft:0, offsetTop:0, width:0, height:0}};
 
 const frames = 60;
 
@@ -30,6 +30,10 @@ function resize(){
 	screen.height = screen.width = screenSize;
 	screen.offsetLeft = Math.floor((canvas.width - screen.width)/2);
 	screen.offsetTop = Math.floor((canvas.height - screen.height)/2);
+	screen.display.offsetTop = screen.height/5 + screen.offsetTop;
+	screen.display.offsetLeft = screen.offsetLeft;
+	screen.display.width = screen.width;
+	screen.display.height = screen.height - screen.display.offsetTop*2;
 	ctx.imageSmoothingEnabled = false;
 	userInterface.resize();
 }
