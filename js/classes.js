@@ -5,9 +5,12 @@ class UI{
 		this.menuWorld = false;
 		this.transition = false;
 		this.fullscreen = false;
+		this.gamepadConnected = false;
+		this.gamepads = {};
 		this.loadedLevels = {};
 		this.display = [];
 		this.touchInterface = {startPos:null, endPos:null, dir:null, dist:null}
+		this.gamepadInterface = {axes:{}, buttons:{}};
 		this.start = null;
 		this.tick = 0;
 		this.opacity = 1;
@@ -110,6 +113,7 @@ class UI{
 	}
 
 	update(){
+		if(this.gamepadConnected) this.updateGamepad();
 		this.currentLevel.update();
 		if(this.gamePlay) this.gamePlayUI();
 		else if(this.menu) this.menuUI();
@@ -385,7 +389,7 @@ class UI{
 	}
 
 	input(event, type, special = null){
-		event.preventDefault();
+		if(event.preventDefault) event.preventDefault();
 		if(type === "key"){
 			if(this.gamePlay){
 				switch(event.key){
@@ -499,7 +503,75 @@ class UI{
 					if(this.touchInterface.dist > this.currentLevel.size/2) this.currentLevel.player.collide(this.touchInterface.dir);
 				}
 			}
+		} else if(type === "gamepadButton"){
+			if(this.gamePlay){
+				switch(event){
+					case "14":
+						this.currentLevel.player.collide(3);
+						break;
+					case "15":
+						this.currentLevel.player.collide(2);
+						break;
+					case "12":
+						this.currentLevel.player.collide(0);
+						break;
+					case "13":
+						this.currentLevel.player.collide(1);
+						break;
+					case "9":
+					case "17":
+						this.openMenu();
+						break;
+					case "0":
+						this.currentLevel.reset();
+						break;
+				}
+			} else if(this.menu){
+
+			}
+		} else if(type === "gamepadAxes"){
+			if(this.gamePlay){
+			} else if(this.menu){
+			}
 		}
+	}
+
+	handleGamepadInputs(gamepad){
+		for(let button in gamepad.buttons){
+			if(gamepad.buttons[button].pressed || gamepad.buttons[button] > 0) {
+				if(button in this.gamepadInterface.buttons) continue;
+				this.gamepadInterface.buttons[button] = true;
+				this.input(button, "gamepadButton");
+				console.log(this.gamepadInterface.buttons);
+			} else{
+				delete this.gamepadInterface.buttons[button];
+			}
+		}
+		
+		for(let axis in gamepad.axes){
+			if(gamepad.axes[axis] !== this.gamepadInterface.axes[axis]){
+				this.gamepadInterface.axes[axis] = gamepad.axes[axis];
+			}
+		}
+		//this.input(this.gamepadInterface, "gamepad");
+	}
+
+	updateGamepad(){
+		this.gamepads = navigator.getGamepads();
+		for(let id in this.gamepads){
+			if(this.gamepads[id])	this.handleGamepadInputs(this.gamepads[id]);
+			else break;
+		}
+	}
+
+	connectController(e){
+		this.gamepadConnected = true;
+	}
+
+	disconnectController(e){
+		this.gamepadConnected = false;
+		this.gamepads = navigator.getGamepads();
+		console.log(this.gamepads);
 	}
 
 	render(){
@@ -621,6 +693,14 @@ class Level{
 			ctx.clearRect(this.offsetLeft + this.exit.x * this.size, this.offsetTop + this.exit.y * this.size, this.size, this.border+1);
 		}
 		}
+		// ctx.globalAlpha = 0.2;
+		// ctx.fillStyle = "red";
+		// ctx.fillRect(screen.offsetLeft, screen.offsetTop, screen.width, screen.height);
+		// ctx.fillStyle = "green";
+		// ctx.fillRect(screen.display.offsetLeft, screen.display.offsetTop, screen.display.width, screen.display.height);
+		// ctx.fillStyle = "blue";
+		// ctx.fillRect(this.offsetLeft, this.offsetTop, this.width*this.size, this.height*this.size);
+		// ctx.globalAlpha = 1;
 	}
 }
 

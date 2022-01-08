@@ -30,10 +30,10 @@ function resize(){
 	screen.height = screen.width = screenSize;
 	screen.offsetLeft = Math.floor((canvas.width - screen.width)/2);
 	screen.offsetTop = Math.floor((canvas.height - screen.height)/2);
-	screen.display.offsetTop = screen.height/5 + screen.offsetTop;
+	screen.display.offsetTop = Math.floor(screen.height/5) + screen.offsetTop;
 	screen.display.offsetLeft = screen.offsetLeft;
 	screen.display.width = screen.width;
-	screen.display.height = screen.height - screen.display.offsetTop*2;
+	screen.display.height = screen.height - (screen.display.offsetTop - screen.offsetTop)*2;
 	ctx.imageSmoothingEnabled = false;
 	userInterface.resize();
 }
@@ -48,4 +48,7 @@ window.addEventListener("mousedown", e => userInterface.input(e, "mouse", "start
 window.addEventListener("mouseup", e => userInterface.input(e, "mouse", "end"), false);
 window.addEventListener("mousemove", e => userInterface.input(e, "mouse", "move"), false);
 
-canvas.addEventListener("contextmenu", e => e.preventDefault());
+//canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+window.addEventListener("gamepadconnected", e => userInterface.connectController(e));
+window.addEventListener("gamepaddisconnected", e => userInterface.disconnectController(e));
