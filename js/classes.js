@@ -1,22 +1,24 @@
 class UI {
 	constructor() {
-		this.gamePlay = true;
-		this.menu = false;
 		this.menuWorld = false;
-		this.transition = false;
 		this.fullscreen = false;
+		this.state = "gamePlayUI";
 		this.gamepadConnected = false;
 		this.gamepads = {};
 		this.loadedLevels = {};
 		this.display = [];
 		this.touchInterface = { startPos: null, endPos: null, dir: null, dist: null }
 		this.gamepadInterface = { axes: {}, buttons: {}};
-		this.cursor = new Cursor(0, 0);
+		this.cursor = new Cursor(screen.width/2 + screen.offsetLeft, screen.width/2 + screen.offsetLeft);
+		this.device = "keyboard";
 		this.start = null;
 		this.tick = 0;
 		this.opacity = 1;
 		this.buttons = {};
 		this.activeButtons = {};
+		this.icons = {};
+		this.activeIcons = {};
+
 		this.buttons.leftButton = new Button("images/leftButton.png", () => { userInterface.previousLevel() }, (button) => {
 			button.width = screen.width / 10;
 			button.height = screen.width / 10;
@@ -36,7 +38,7 @@ class UI {
 			button.y = screen.height + screen.offsetTop - (screen.width / 20) * 3;
 		});
 		this.buttons.menuButton = new Button("images/menuButton.png", () => {
-			if (userInterface.menu) userInterface.closeMenu();
+			if (userInterface.state === "menuUI") userInterface.closeMenu();
 			else userInterface.openMenu();
 		}, (button) => {
 			button.width = screen.width / 10;
@@ -61,11 +63,11 @@ class UI {
 		});
 
 		this.buttons.settingsButton = new Button("images/settingsButton.png", (button) => {
-			if (userInterface.settings) {
-				userInterface.exitFullscreen();
+			if (userInterface.state === "settingsUI") {
+				userInterface.closeSettings();
 			}
 			else {
-				userInterface.enterFullscreen();
+				userInterface.openSettings();
 			}
 		}, (button) => {
 			button.width = screen.width / 10;
@@ -81,6 +83,13 @@ class UI {
 			button.height = screen.width / 10;
 			button.x = screen.offsetLeft + screen.width / 2 - screen.width / 20;
 			button.y = screen.offsetTop + screen.width / 20;
+		});
+
+		this.icons.controls = new Icon("images/keyboard.png", (icon) => {
+			icon.width = screen.width / 4;
+			icon.height = screen.width / 4;
+			icon.x = screen.offsetLeft + screen.width / 2 - icon.width/2;
+			icon.y = screen.offsetTop + screen.width / 5;
 		});
 
 		this.createWorldButtons();
@@ -115,12 +124,17 @@ class UI {
 
 	update() {
 		if (this.gamepadConnected) this.updateGamepad();
+
 		this.currentLevel.update();
-		if (this.gamePlay) this.gamePlayUI();
-		else if (this.menu) this.menuUI();
-		else if (this.transition) this.clearUI();
+
+		if(this.state){
+			this[this.state]();
+		}
+
 		this.render();
+
 		if (this.display.length) this[this.display[0]]();
+
 		this.tick++;
 	}
 
@@ -210,8 +224,34 @@ class UI {
 		this.blackout();
 	}
 
+	settingsUI() {
+		if (!("menuButton" in this.activeButtons)) {
+			this.activeButtons.menuButton = this.buttons.menuButton;
+			this.activeButtons.menuButton.resize(this.activeButtons.menuButton);
+		}
+
+		if (!("fullScreenButton" in this.activeButtons)) {
+			this.activeButtons.fullScreenButton = this.buttons.fullScreenButton;
+			this.activeButtons.fullScreenButton.resize(this.activeButtons.fullScreenButton);
+		}
+
+		if (!("settingsButton" in this.activeButtons)) {
+			this.activeButtons.settingsButton = this.buttons.settingsButton;
+			this.activeButtons.settingsButton.resize(this.activeButtons.settingsButton);
+		}
+
+		if (!("controls" in this.activeIcons)) {
+			this.activeIcons.controls = this.icons.controls;
+			this.activeIcons.controls.resize(this.activeIcons.controls);
+		}
+
+		this.opacity = 0.8;
+		this.blackout();
+	}
+
 	clearUI() {
 		this.activeButtons = {};
+		this.activeIcons = {};
 	}
 
 	checkHover(button, position) {
@@ -223,27 +263,37 @@ class UI {
 			this.activeButtons[button].resize(this.activeButtons[button]);
 		}
 
+		for (let icon in this.activeIcons) {
+			this.activeIcons[icon].resize(this.activeIcons[icon]);
+		}
+
 		this.currentLevel.resize();
 
 		this.cursor.resize();
 	}
 
 	nextLevel() {
-		this.display = ["stopGamePlay", "startTransition", "fadeout", "increaseLevel", "loadLevel", "blackout", "fadein", "stopTransition", "startGamePlay"];
+		this.display = ["startTransition", "fadeout", "increaseLevel", "loadLevel", "blackout", "fadein", "startGamePlay"];
 	}
 
 	previousLevel() {
-		this.display = ["stopGamePlay", "startTransition", "fadeout", "decreaseLevel", "loadLevel", "blackout", "fadein", "stopTransition", "startGamePlay"];
+		this.display = ["startTransition", "fadeout", "decreaseLevel", "loadLevel", "blackout", "fadein", "startGamePlay"];
 	}
 
 	openMenu() {
-		this.menuWorld = false;
-		this.display = ["stopGamePlay", "startTransition", "stopTransition", "startMenu"];
+		this.display = ["resetMenu", "startTransition", "startMenu"];
 	}
 
 	closeMenu() {
-		this.menuWorld = false;
-		this.display = ["stopMenu", "startTransition", "stopTransition", "startGamePlay"];
+		this.display = ["resetMenu", "startTransition", "startGamePlay"];
+	}
+
+	openSettings(){
+		this.display = ["startTransition", "startSettings"];
+	}
+
+	closeSettings(){
+		this.display = ["startTransition", "startMenu"];
 	}
 
 	enterFullscreen() {
@@ -306,36 +356,6 @@ class UI {
 		}
 	}
 
-	startGamePlay() {
-		this.gamePlay = true;
-		this.endDisplay();
-	}
-
-	stopGamePlay() {
-		this.gamePlay = false;
-		this.endDisplay();
-	}
-
-	startTransition() {
-		this.transition = true;
-		this.endDisplay();
-	}
-
-	stopTransition() {
-		this.transition = false;
-		this.endDisplay();
-	}
-
-	startMenu() {
-		this.menu = true;
-		this.endDisplay();
-	}
-
-	stopMenu() {
-		this.menu = false;
-		this.endDisplay();
-	}
-
 	blackout() {
 		if (!this.start) {
 			this.start = this.tick;
@@ -347,6 +367,33 @@ class UI {
 		if (this.tick - this.start >= 60) {
 			this.endDisplay();
 		}
+	}
+
+	startGamePlay() {
+		this.state = "gamePlayUI";
+		this.endDisplay();
+	}
+
+	startTransition() {
+		this.state = "clearUI";
+		this.endDisplay();
+	}
+
+	startMenu() {
+		this.state = "menuUI";
+		this.blackout();
+		this.endDisplay();
+	}
+
+	resetMenu() {
+		this.menuWorld = false;
+		this.endDisplay();
+	}
+
+	startSettings() {
+		this.state = "settingsUI";
+		this.blackout();
+		this.endDisplay();
 	}
 
 	loadLevel() {
@@ -394,7 +441,8 @@ class UI {
 	input(event, type, special = null) {
 		if (event.preventDefault) event.preventDefault();
 		if (type === "key") {
-			if (this.gamePlay) {
+			this.device = "keyboard";
+			if (this.state === "gamePlayUI") {
 				switch (event.key) {
 					case "ArrowLeft":
 					case "a":
@@ -419,8 +467,10 @@ class UI {
 					case " ":
 						this.currentLevel.reset();
 						break;
+					case "q":
+						this.openSettings();
 				}
-			} else if (this.menu) {
+			} else if (this.state === "menuUI") {
 				switch (event.key) {
 					case "1":
 					case "2":
@@ -431,11 +481,13 @@ class UI {
 					case "7":
 					case "8":
 					case "9":
-						if (this.menuWorld) {
+						if (this.menuWorld && `${this.menuWorld},${event.key-1}` in this.loadedLevels) {
 							this.world = this.menuWorld;
 							this.level = parseInt(event.key) - 1;
-							this.display = ["stopMenu", "startTransition", "fadeout", "loadLevel", "blackout", "fadein", "stopTransition", "startGamePlay"];
-						} else this.menuWorld = parseInt(event.key);
+							this.display = ["startTransition", "fadeout", "loadLevel", "blackout", "fadein", "startGamePlay"];
+						} else if(`${event.key},0` in this.loadedLevels){
+							this.menuWorld = parseInt(event.key);
+						}
 						break;
 					case "m":
 					case "e":
@@ -443,6 +495,8 @@ class UI {
 						break;
 					default:
 				}
+			} else if (this.state === "settingsUI"){
+				
 			}
 			switch (event.key) {
 				case "Escape":
@@ -454,6 +508,7 @@ class UI {
 				default:
 			}
 		} else if (type === "touch") {
+			this.device = "touch";
 			if (special === "start") {
 				this.touchInterface.startPos = { x: event.touches[0].clientX, y: event.touches[0].clientY };
 				this.touchInterface.endPos = { x: event.touches[0].clientX, y: event.touches[0].clientY };
@@ -474,11 +529,12 @@ class UI {
 					else this.touchInterface.dir = 2;
 				}
 				if (this.clickButton(this.touchInterface.endPos)) return;
-				if (this.gamePlay) {
+				if (this.state === "gamePlayUI") {
 					if (this.touchInterface.dist > this.currentLevel.size / 2) this.currentLevel.player.collide(this.touchInterface.dir);
 				}
 			}
 		} else if (type === "mouse") {
+			this.device = "mouse";
 			if (special === "start") {
 				this.touchInterface.startPos = { x: event.x, y: event.y };
 				this.touchInterface.endPos = { x: event.x, y: event.y };
@@ -500,12 +556,13 @@ class UI {
 					else this.touchInterface.dir = 2;
 				}
 				if (this.clickButton(this.touchInterface.endPos)) return;
-				if (this.gamePlay) {
+				if (this.state === "gamePlayUI") {
 					if (this.touchInterface.dist > this.currentLevel.size / 2) this.currentLevel.player.collide(this.touchInterface.dir);
 				}
 			}
 		} else if (type === "gamepadButton") {
-			if (this.gamePlay) {
+			this.device = "gamepad";
+			if (this.state === "gamePlayUI") {
 				switch (event) {
 					case "14":
 						this.currentLevel.player.collide(3);
@@ -526,8 +583,16 @@ class UI {
 					case "2":
 						this.currentLevel.reset();
 						break;
+					case "5":
+					case "7":
+						if([this.world, this.level + 1] in this.loadedLevels || [this.world + 1, 1] in this.loadedLevels) this.nextLevel();
+						break;
+					case "4":
+					case "6":
+						if([this.world, this.level - 1] in this.loadedLevels || [this.world - 1, 9] in this.loadedLevels) this.previousLevel();
+						break;
 				}
-			} else if (this.menu) {
+			} else if (this.state === "menuUI") {
 				switch (event) {
 					case "9":
 					case "1":
@@ -545,7 +610,8 @@ class UI {
 					else this.enterFullscreen();
 			}
 		} else if (type === "gamepadAxes") {
-			if (this.gamePlay) {
+			this.device = "gamepad";
+			if (this.state === "gamePlayUI") {
 				if (special == 0) {
 					if (event == -1.0) {
 						this.currentLevel.player.collide(3);
@@ -559,7 +625,7 @@ class UI {
 						this.currentLevel.player.collide(1);
 					}
 				}
-			} else if (this.menu) {
+			} else if (this.state === "menuUI") {
 			}
 			if (special == 2 || special == 3) {
 				if(Math.abs(this.gamepadInterface.axes[2]) < 0.3 && Math.abs(this.gamepadInterface.axes[3]) < 0.3) return;
@@ -629,6 +695,10 @@ class UI {
 			let image = this.activeButtons[button];
 			ctx.drawImage(image.image, image.x, image.y, image.width, image.height);
 		}
+		for (let icon in this.activeIcons) {
+			let image = this.activeIcons[icon];
+			ctx.drawImage(image.image, image.x, image.y, image.width, image.height);
+		}
 		if(this.gamepadConnected){
 			this.cursor.render();
 		}
@@ -668,31 +738,18 @@ class Button {
 			this.hovered = false;
 		}
 	}
+}
 
-	getAngle(x1, y1, x2, y2) {
-		let angle = Math.PI / 2;
-		if (x2 - x1 != 0) {
-			angle = Math.atan(Math.abs((y2 - y1) / (x2 - x1)));
-		}
-		if (x2 - x1 < 0) {
-			angle -= Math.PI;
-			if (y2 - y1 < 0) {
-				angle *= -1;
-			}
-		} else {
-			if (y2 - y1 > 0) {
-				angle *= -1;
-			}
-		}
-		return angle;
-	}
-
-	getAngles(x, y) {
-		return [this.getAngle(x, y, this.x, this.y), this.getAngle(x, y, this.x + this.width, this.y), this.getAngle(x, y, this.x, this.y + this.height), this.getAngle(x, y, this.x + this.width, this.y + this.height)];
-	}
-
-	getDistance(x, y) {
-		return ((this.x - x) ** 2 + (this.y - y) ** 2) ** 0.5;
+class Icon {
+	constructor(src, resize) {
+		this.x = 1;
+		this.y = 1;
+		this.width = 1;
+		this.height = 1;
+		this.image = new Image();
+		this.image.src = src;
+		this.resize = resize;
+		this.resize(this);
 	}
 }
 
