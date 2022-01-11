@@ -8,8 +8,8 @@ class UI {
 		this.loadedLevels = {};
 		this.display = [];
 		this.touchInterface = { startPos: null, endPos: null, dir: null, dist: null }
-		this.gamepadInterface = { axes: {}, buttons: {}};
-		this.cursor = new Cursor(screen.width/2 + screen.offsetLeft, screen.width/2 + screen.offsetLeft);
+		this.gamepadInterface = { axes: {}, buttons: {} };
+		this.cursor = new Cursor(screen.width / 2 + screen.offsetLeft, screen.width / 2 + screen.offsetLeft);
 		this.device = "keyboard";
 		this.start = null;
 		this.tick = 0;
@@ -85,11 +85,20 @@ class UI {
 			button.y = screen.offsetTop + screen.width / 20;
 		});
 
+		this.buttons.controlsButton = new Button("images/fullScreenButton.png", (button) => {
+			this.openControls();
+		}, (button) => {
+			button.width = screen.width / 10;
+			button.height = screen.width / 10;
+			button.x = screen.offsetLeft + screen.width - button.width - screen.width / 50;
+			button.y = screen.offsetTop + screen.width / 20;
+		});
+
 		this.icons.controls = new Icon("images/keyboard.png", (icon) => {
-			icon.width = screen.width / 4;
-			icon.height = screen.width / 4;
-			icon.x = screen.offsetLeft + screen.width / 2 - icon.width/2;
-			icon.y = screen.offsetTop + screen.width / 5;
+			icon.width = screen.width - screen.width / 10;
+			icon.height = screen.height - screen.width / 10;
+			icon.x = screen.offsetLeft + screen.width / 20;
+			icon.y = screen.offsetTop + screen.width / 20;
 		});
 
 		this.createWorldButtons();
@@ -127,7 +136,7 @@ class UI {
 
 		this.currentLevel.update();
 
-		if(this.state){
+		if (this.state) {
 			this[this.state]();
 		}
 
@@ -166,6 +175,11 @@ class UI {
 		if (!("menuButton" in this.activeButtons)) {
 			this.activeButtons.menuButton = this.buttons.menuButton;
 			this.activeButtons.menuButton.resize(this.activeButtons.menuButton);
+		}
+
+		if (!("controlsButton" in this.activeButtons)) {
+			this.activeButtons.controlsButton = this.buttons.controlsButton;
+			this.activeButtons.controlsButton.resize(this.activeButtons.controlsButton);
 		}
 	}
 
@@ -240,11 +254,6 @@ class UI {
 			this.activeButtons.settingsButton.resize(this.activeButtons.settingsButton);
 		}
 
-		if (!("controls" in this.activeIcons)) {
-			this.activeIcons.controls = this.icons.controls;
-			this.activeIcons.controls.resize(this.activeIcons.controls);
-		}
-
 		this.opacity = 0.8;
 		this.blackout();
 	}
@@ -252,6 +261,18 @@ class UI {
 	clearUI() {
 		this.activeButtons = {};
 		this.activeIcons = {};
+	}
+
+	controlsUI() {
+		if (!("controls" in this.activeIcons)) {
+			this.activeIcons.controls = this.icons.controls;
+			this.activeIcons.controls.resize(this.activeIcons.controls);
+		} else {
+			//this.activeIcons.controls.image.src = `images/${this.device}.png`;
+		}
+
+		this.opacity = 0.8;
+		this.blackout();
 	}
 
 	checkHover(button, position) {
@@ -288,12 +309,20 @@ class UI {
 		this.display = ["resetMenu", "startTransition", "startGamePlay"];
 	}
 
-	openSettings(){
+	openSettings() {
 		this.display = ["startTransition", "startSettings"];
 	}
 
-	closeSettings(){
+	closeSettings() {
 		this.display = ["startTransition", "startMenu"];
+	}
+
+	openControls() {
+		this.display = ["startTransition", "startControls"];
+	}
+
+	closeControls() {
+		this.display = ["startTransition", "startGamePlay"];
 	}
 
 	enterFullscreen() {
@@ -396,6 +425,12 @@ class UI {
 		this.endDisplay();
 	}
 
+	startControls() {
+		this.state = "controlsUI";
+		this.blackout();
+		this.endDisplay();
+	}
+
 	loadLevel() {
 		if ([this.world, this.level] in this.loadedLevels) {
 			this.currentLevel = this.loadedLevels[[this.world, this.level]];
@@ -430,7 +465,7 @@ class UI {
 		for (let button in this.activeButtons) {
 			let over = this.checkHover(this.activeButtons[button], position);
 			if (over) {
-				this.activeButtons[button].unhover();
+				if (this.activeButtons[button].hovered) this.activeButtons[button].unhover();
 				this.activeButtons[button].function(this.activeButtons[button]);
 				return true;
 			}
@@ -465,10 +500,13 @@ class UI {
 						this.openMenu();
 						break;
 					case " ":
+					case "r":
 						this.currentLevel.reset();
 						break;
 					case "q":
 						this.openSettings();
+					default:
+						this.openControls();
 				}
 			} else if (this.state === "menuUI") {
 				switch (event.key) {
@@ -481,11 +519,11 @@ class UI {
 					case "7":
 					case "8":
 					case "9":
-						if (this.menuWorld && `${this.menuWorld},${event.key-1}` in this.loadedLevels) {
+						if (this.menuWorld && `${this.menuWorld},${event.key - 1}` in this.loadedLevels) {
 							this.world = this.menuWorld;
 							this.level = parseInt(event.key) - 1;
 							this.display = ["startTransition", "fadeout", "loadLevel", "blackout", "fadein", "startGamePlay"];
-						} else if(`${event.key},0` in this.loadedLevels){
+						} else if (`${event.key},0` in this.loadedLevels) {
 							this.menuWorld = parseInt(event.key);
 						}
 						break;
@@ -494,21 +532,28 @@ class UI {
 						this.closeMenu();
 						break;
 					default:
+						this.openControls();
 				}
-			} else if (this.state === "settingsUI"){
-				
+			} else if (this.state === "settingsUI") {
+
+			} else if (this.state === "controlsUI") {
+				switch (event.key) {
+					default:
+						this.closeControls();
+				}
 			}
 			switch (event.key) {
 				case "Escape":
 					if (this.fullscreen) this.exitFullscreen();
 					break;
-				case "F11":
+				case "F":
 					if (this.fullscreen) this.exitFullscreen();
 					else this.enterFullscreen();
 				default:
 			}
 		} else if (type === "touch") {
 			this.device = "touch";
+			if (this.state === "controlsUI") this.closeControls();
 			if (special === "start") {
 				this.touchInterface.startPos = { x: event.touches[0].clientX, y: event.touches[0].clientY };
 				this.touchInterface.endPos = { x: event.touches[0].clientX, y: event.touches[0].clientY };
@@ -539,6 +584,13 @@ class UI {
 				this.touchInterface.startPos = { x: event.x, y: event.y };
 				this.touchInterface.endPos = { x: event.x, y: event.y };
 				this.checkOverButton(this.touchInterface.endPos);
+				if (this.state === "controlsUI") {
+					this.closeControls();
+				} else {
+					if (event.button) {
+						this.openControls();
+					}
+				}
 			} else if (special === "move") {
 				this.touchInterface.endPos = { x: event.x, y: event.y };
 				this.checkOverButton(this.touchInterface.endPos);
@@ -585,12 +637,14 @@ class UI {
 						break;
 					case "5":
 					case "7":
-						if([this.world, this.level + 1] in this.loadedLevels || [this.world + 1, 1] in this.loadedLevels) this.nextLevel();
+						if ([this.world, this.level + 1] in this.loadedLevels || [this.world + 1, 1] in this.loadedLevels) this.nextLevel();
 						break;
 					case "4":
 					case "6":
-						if([this.world, this.level - 1] in this.loadedLevels || [this.world - 1, 9] in this.loadedLevels) this.previousLevel();
+						if ([this.world, this.level - 1] in this.loadedLevels || [this.world - 1, 9] in this.loadedLevels) this.previousLevel();
 						break;
+					case "17":
+						this.openControls();
 				}
 			} else if (this.state === "menuUI") {
 				switch (event) {
@@ -599,11 +653,15 @@ class UI {
 					case "3":
 						this.closeMenu();
 						break;
+					case "17":
+						this.openControls();
 				}
+			} else if (this.state === "controlsUI") {
+				this.closeControls();
 			}
 			switch (event) {
 				case "0":
-					this.clickButton({x:this.cursor.x, y:this.cursor.y});
+					this.clickButton({ x: this.cursor.x, y: this.cursor.y });
 					break;
 				case "17":
 					if (this.fullscreen) this.exitFullscreen();
@@ -628,14 +686,14 @@ class UI {
 			} else if (this.state === "menuUI") {
 			}
 			if (special == 2 || special == 3) {
-				if(Math.abs(this.gamepadInterface.axes[2]) < 0.3 && Math.abs(this.gamepadInterface.axes[3]) < 0.3) return;
+				if (Math.abs(this.gamepadInterface.axes[2]) < 0.3 && Math.abs(this.gamepadInterface.axes[3]) < 0.3) return;
 				this.cursor.x += this.gamepadInterface.axes[2] * this.cursor.sensitivity;
 				this.cursor.y += this.gamepadInterface.axes[3] * this.cursor.sensitivity;
-				if(this.cursor.x < screen.offsetLeft) this.cursor.x = screen.offsetLeft;
-				else if(this.cursor.x > screen.offsetLeft + screen.width) this.cursor.x = screen.offsetLeft + screen.width;
-				if(this.cursor.y < screen.offsetTop) this.cursor.y = screen.offsetTop;
-				else if(this.cursor.y > screen.offsetTop + screen.height) this.cursor.y = screen.offsetTop + screen.height;
-				this.checkOverButton({x:this.cursor.x, y:this.cursor.y});
+				if (this.cursor.x < screen.offsetLeft) this.cursor.x = screen.offsetLeft;
+				else if (this.cursor.x > screen.offsetLeft + screen.width) this.cursor.x = screen.offsetLeft + screen.width;
+				if (this.cursor.y < screen.offsetTop) this.cursor.y = screen.offsetTop;
+				else if (this.cursor.y > screen.offsetTop + screen.height) this.cursor.y = screen.offsetTop + screen.height;
+				this.checkOverButton({ x: this.cursor.x, y: this.cursor.y });
 			}
 		}
 	}
@@ -654,7 +712,7 @@ class UI {
 
 		for (let axis in gamepad.axes) {
 			let truncated = Math.floor(gamepad.axes[axis] * 10) / 10;
-			if(axis == 1 || axis == 0){
+			if (axis == 1 || axis == 0) {
 				if (truncated !== this.gamepadInterface.axes[axis]) {
 					this.gamepadInterface.axes[axis] = truncated;
 					this.input(this.gamepadInterface.axes[axis], "gamepadAxes", axis);
@@ -699,7 +757,7 @@ class UI {
 			let image = this.activeIcons[icon];
 			ctx.drawImage(image.image, image.x, image.y, image.width, image.height);
 		}
-		if(this.gamepadConnected){
+		if (this.gamepadConnected) {
 			this.cursor.render();
 		}
 	}
@@ -754,23 +812,49 @@ class Icon {
 }
 
 class Cursor {
-	constructor(x, y){
+	constructor(x, y) {
 		this.x = x;
 		this.y = y;
-		this.width = screen.width/10;
-		this.height = screen.height/10;
+		this.width = screen.width / 10;
+		this.height = screen.height / 10;
 		this.sensitivity = 5;
 		this.image = new Image();
 		this.image.src = "images/cursor.png";
 	}
 
-	resize(){
-		this.width = screen.width/10;
-		this.height = screen.height/10;
+	resize() {
+		this.width = screen.width / 10;
+		this.height = screen.height / 10;
 	}
 
-	render(){
-		ctx.drawImage(this.image, this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+	render() {
+		ctx.drawImage(this.image, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+	}
+}
+
+class Animation {
+	constructor(x, y, src, resize) {
+		this.x = x;
+		this.y = y;
+		this.width = 1;
+		this.height = 1;
+		this.image = new Image();
+		this.image.src = src;
+		this.resize = resize;
+		this.tick = 0;
+		this.frame = 0;
+	}
+
+	update() {
+		if (!(this.tick % frames)) this.render();
+
+		this.tick++;
+	}
+
+	render() {
+		this.frame++;
+		ctx.drawImage(this.image, this.frame * this.size);
+		//ctx.drawImage(this.image, (this.size * 4 + this.dir) * 16, this.col * 16, 16, 16, this.x * this.parent.size + this.parent.offsetLeft, this.y * this.parent.size + this.parent.offsetTop, this.parent.size, this.parent.size);
 	}
 }
 
@@ -886,36 +970,43 @@ class Object {
 		return (dir !== this.dir) && ((dir < 2 && this.dir < 2) || (dir > 1 && this.dir > 1));
 	}
 
-	move(pos, dir) {
+	moveChildren() {
+		this.contains.x = this.x;
+		this.contains.y = this.y;
+		if (this.contains.contains) this.contains.moveChildren();
+	}
+
+	checkContainer(dir) {
+		let large = true;
+		let small = true;
+
 		if (this.container) {
-			let opening = this.container.checkOpening(dir);
-			if (opening) {
-				let largeOpening = false;
-				if (this.container.container) {
-					largeOpening = this.container.container.checkOpening(dir);
-				}
-				if (this.container.container && !largeOpening) {
-					this.container.move(pos, dir);
-					this.x = this.container.x;
-					this.y = this.container.y;
-					return;
-				}
-				this.container.contains = null;
-				this.container = null;
-				this.parent.level[pos] = this;
-				this.x = pos[0];
-				this.y = pos[1];
-			} else {
-				this.container.move(pos, dir);
-				this.x = this.container.x;
-				this.y = this.container.y;
-			}
-		} else {
-			delete this.parent.level[[this.x, this.y]];
-			this.parent.level[pos] = this;
-			this.x = pos[0];
-			this.y = pos[1];
+			small = this.container.checkOpening(dir);
+			if (this.container.container) large = this.container.container.checkOpening(dir);
 		}
+
+		if(!large){
+			return this.container.container;
+		} else if(!small){
+			return this.container;
+		}
+		return this;
+	}
+
+	move(pos) {
+		if (this.container) {
+			this.container.move(pos);
+			return;
+		}
+		this.parent.level[pos] = this;
+		this.x = pos[0];
+		this.y = pos[1];
+		if (this.contains) this.moveChildren();
+	}
+
+	leaveContainer() {
+		if(this.container) this.container.contains = null;
+		this.container = null;
 	}
 
 	render() {
@@ -946,7 +1037,7 @@ class Hexagon extends Object {
 
 class Player extends Object {
 	constructor(x, y, parent) {
-		super(x, y, parent);
+		super(x, y, parent, 2);
 		this.image.src = "images/player.png"
 		this.required = true;
 	}
@@ -968,42 +1059,45 @@ class Player extends Object {
 			default:
 		}
 
-		if (newPosition in this.parent.level) {
+		let inside = (newPosition[0] >= 0 && newPosition[1] >= 0 && newPosition[0] < this.parent.width && newPosition[1] < this.parent.height);
+		if (this.parent.solved && newPosition[0] === this.parent.exit.x && newPosition[1] === this.parent.exit.y) {
+			this.move(newPosition);
+			this.parent.finish();
+		}
+		if(!inside) return;
+
+		let leaving = this.checkContainer(dir);
+
+		if(newPosition in this.parent.level){
 			let newContainer = this.parent.level[newPosition];
-			if (dir === newContainer.dir) {
-				if (!this.container) {
-					if (newContainer.contains) {
-						this.move(newPosition, dir);
-						this.container = newContainer.contains;
-						this.container.contains = this;
-						this.move(newPosition, dir);
-					} else {
-						this.move(newPosition, dir);
-						this.container = newContainer;
-						this.container.contains = this;
-						this.move(newPosition, dir);
+			if((newContainer.size < leaving.size) && dir === newContainer.dir){
+				if(newContainer.contains){
+					if((newContainer.contains.size < leaving.size) && dir === newContainer.contains.dir){
+						if(!leaving.container) 	delete this.parent.level[[this.x, this.y]];
+						leaving.leaveContainer();
+						leaving.container = newContainer.contains;
+						leaving.container.contains = leaving;
+						leaving.move(newPosition);
 					}
-				} else if (this.container.container || newContainer.contains) {
-					return;
-				}
-				else if (newContainer.size < this.container.size) {
-					if (this.container instanceof Hexagon) {
-						if (!(newContainer instanceof Hexagon)) return;
-					} else if (this.container instanceof Square) {
-						if (newContainer instanceof Triangle) return;
-					}
-					this.move(newPosition, dir);
-					newContainer.contains = this.container;
-					this.container.container = newContainer;
-					this.move(newPosition, dir);
-					if (this.container.container.required && this.container.required) this.parent.solved = true;
+				} else {
+					if(!leaving.container) 	delete this.parent.level[[this.x, this.y]];
+					leaving.leaveContainer();
+					leaving.container = newContainer;
+					leaving.container.contains = leaving;
+					leaving.move(newPosition);
 				}
 			}
-		} else {
-			if (newPosition[0] >= 0 && newPosition[1] >= 0 && newPosition[0] < this.parent.width && newPosition[1] < this.parent.height) this.move(newPosition, dir);
-			if (this.parent.solved && newPosition[0] === this.parent.exit.x && newPosition[1] === this.parent.exit.y) {
-				this.move(newPosition, dir);
-				this.parent.finish();
+		} else{
+			if(!leaving.container) 	delete this.parent.level[[this.x, this.y]];
+			leaving.leaveContainer();
+			leaving.move(newPosition);
+		}
+
+		if(this.container){
+			if(this.container.container){
+				if(this.container.container.required && this.container.required){
+					this.parent.solved = true;
+				}
 			}
 		}
 	}

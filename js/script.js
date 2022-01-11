@@ -48,7 +48,7 @@ window.addEventListener("mousedown", e => userInterface.input(e, "mouse", "start
 window.addEventListener("mouseup", e => userInterface.input(e, "mouse", "end"), false);
 window.addEventListener("mousemove", e => userInterface.input(e, "mouse", "move"), false);
 
-//canvas.addEventListener("contextmenu", e => e.preventDefault());
+canvas.addEventListener("contextmenu", e => e.preventDefault());
 
 window.addEventListener("gamepadconnected", e => userInterface.connectController(e));
 window.addEventListener("gamepaddisconnected", e => userInterface.disconnectController(e));

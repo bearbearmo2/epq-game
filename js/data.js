@@ -1,33 +1,33 @@
 const levels = {
 	"1": [
 		{
-			name: "1",
+			name: "1",//learn movement and how to progress
 			layout: `P,-,s.2.1.1,S.2.1.1`,
 			exit: { x: 3, y: 1, dir: 0 },
 		},
 		{
-			name: "2",
+			name: "2",//learn moving a bigger block first
 			layout:
 				`P,-,-,S.2.1.1
 s.1.1.1,-,-,-`,
 			exit: { x: 4, y: 1, dir: 1 },
 		},
 		{
-			name: "3",
+			name: "3",//learn grey blocks do nothing
 			layout:
 				`P,s.2.0,-,S.2.1.1
 -,-,s.2.1.1,-`,
 			exit: { x: 4, y: 1, dir: 1 },
 		},
 		{
-			name: "4",
+			name: "4",//learn using a grey block to move the needed block into the right position
 			layout:
 				`S.3.0,-,P,-
 -,-,s.1.1.1,S.1.1.1`,
 			exit: { x: 3, y: 2, dir: 0 },
 		},
 		{
-			name: "5",
+			name: "5",//you can win by moving the player out, regardless of blocks
 			layout:
 `P,-,S.0.1.1
 -,s.2.1.1,s.2.0
@@ -37,8 +37,9 @@ s.1.1.1,-,-,-`,
 		{
 			name: "6",
 			layout:
-				`P,-,s.2.1.1,S.2.1.1`,
-			exit: { x: 3, y: 1, dir: 0 },
+				`-,S.0.0,s.3.1.1,P
+S.1.1.1,-,S.1.0,-`,
+			exit: { x: 3, y: 2, dir: 0 },
 		},
 		{
 			name: "7",
