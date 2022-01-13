@@ -35,26 +35,28 @@ s.1.1.1,-,-,-`,
 			exit: { x: 2, y: 3, dir: 0 },
 		},
 		{
-			name: "6",
+			name: "6",//you can go straight between boxes
 			layout:
-				`-,S.0.0,s.3.1.1,P
+`-,S.0.0,s.3.1.1,P
 S.1.1.1,-,S.1.0,-`,
 			exit: { x: 3, y: 2, dir: 0 },
 		},
 		{
-			name: "7",
+			name: "7",//fun level
+			layout:
+`P,S.3.0,-,-
+s.1.0,s.0.1.1,-,-
+S.1.0,-,-,S.2.1.1`,
+			exit: { x: 3, y: 3, dir: 0 },
+		},
+		{
+			name: "8",//fun level
 			layout:
 				`P,-,s.2.1.1,S.2.1.1`,
 			exit: { x: 3, y: 1, dir: 0 },
 		},
 		{
-			name: "8",
-			layout:
-				`P,-,s.2.1.1,S.2.1.1`,
-			exit: { x: 3, y: 1, dir: 0 },
-		},
-		{
-			name: "9",
+			name: "9",//fun level
 			layout:
 				`P,-,s.2.1.1,S.2.1.1`,
 			exit: { x: 3, y: 1, dir: 0 },

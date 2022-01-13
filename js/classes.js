@@ -24,18 +24,21 @@ class UI {
 			button.height = screen.width / 10;
 			button.x = screen.offsetLeft + screen.width / 50;
 			button.y = screen.height + screen.offsetTop - (screen.width / 20) * 3;
+			button.hovered = false
 		});
 		this.buttons.rightButton = new Button("images/rightButton.png", () => { userInterface.nextLevel() }, (button) => {
 			button.width = screen.width / 10;
 			button.height = screen.width / 10;
 			button.x = screen.offsetLeft + screen.width - screen.width / 10 - screen.width / 50;
 			button.y = screen.height + screen.offsetTop - (screen.width / 20) * 3;
+			button.hovered = false
 		});
 		this.buttons.resetButton = new Button("images/resetButton.png", () => { userInterface.currentLevel.reset() }, (button) => {
 			button.width = screen.width / 10;
 			button.height = screen.width / 10;
 			button.x = screen.offsetLeft + screen.width / 2 - screen.width / 50;
 			button.y = screen.height + screen.offsetTop - (screen.width / 20) * 3;
+			button.hovered = false
 		});
 		this.buttons.menuButton = new Button("images/menuButton.png", () => {
 			if (userInterface.state === "menuUI") userInterface.closeMenu();
@@ -45,6 +48,7 @@ class UI {
 			button.height = screen.width / 10;
 			button.x = screen.offsetLeft + screen.width / 50;
 			button.y = screen.offsetTop + screen.width / 20;
+			button.hovered = false
 		});
 		this.buttons.fullScreenButton = new Button("images/fullScreenButton.png", (button) => {
 			if (userInterface.fullscreen) {
@@ -60,6 +64,7 @@ class UI {
 			button.height = screen.width / 10;
 			button.x = screen.offsetLeft + screen.width - screen.width / 10 - screen.width / 50;
 			button.y = screen.offsetTop + screen.width / 20;
+			button.hovered = false
 		});
 
 		this.buttons.settingsButton = new Button("images/settingsButton.png", (button) => {
@@ -74,6 +79,7 @@ class UI {
 			button.height = screen.width / 10;
 			button.x = screen.offsetLeft + screen.width / 2 - screen.width / 20;
 			button.y = screen.offsetTop + screen.width / 20;
+			button.hovered = false
 		});
 
 		this.buttons.backButton = new Button("images/leftButton.png", (button) => {
@@ -83,6 +89,7 @@ class UI {
 			button.height = screen.width / 10;
 			button.x = screen.offsetLeft + screen.width / 2 - screen.width / 20;
 			button.y = screen.offsetTop + screen.width / 20;
+			button.hovered = false
 		});
 
 		this.buttons.controlsButton = new Button("images/fullScreenButton.png", (button) => {
@@ -92,6 +99,7 @@ class UI {
 			button.height = screen.width / 10;
 			button.x = screen.offsetLeft + screen.width - button.width - screen.width / 50;
 			button.y = screen.offsetTop + screen.width / 20;
+			button.hovered = false
 		});
 
 		this.icons.controls = new Icon("images/keyboard.png", (icon) => {
@@ -99,6 +107,7 @@ class UI {
 			icon.height = screen.height - screen.width / 10;
 			icon.x = screen.offsetLeft + screen.width / 20;
 			icon.y = screen.offsetTop + screen.width / 20;
+			icon.hovered = false
 		});
 
 		this.createWorldButtons();
@@ -118,6 +127,7 @@ class UI {
 					button.height = screen.width / 7.5;
 					button.x = screen.offsetLeft + (screen.width / 2 * (j % 3)) + screen.width / 50 * ((j % 3) ? ((j % 3) - 1 ? -1 : 0) : 1) - (button.width / 2) * (j % 3);
 					button.y = screen.offsetTop + button.height * 2 * (Math.floor(j / 3) + 1);
+					button.hovered = false
 				});
 			}
 			this.buttons[i] = new Button(`images/num${i - 1}.png`, (button) => {
@@ -127,6 +137,7 @@ class UI {
 				button.height = screen.width / 7.5;
 				button.x = screen.offsetLeft + (screen.width / 2 * ((i - 1) % 3)) + screen.width / 50 * (((i - 1) % 3) ? (((i - 1) % 3) - 1 ? -1 : 0) : 1) - (button.width / 2) * ((i - 1) % 3);
 				button.y = screen.offsetTop + button.height * 2 * (Math.floor((i - 1) / 3) + 1);
+				button.hovered = false
 			});
 		}
 	}
@@ -273,10 +284,6 @@ class UI {
 
 		this.opacity = 0.8;
 		this.blackout();
-	}
-
-	checkHover(button, position) {
-		return position.x > button.x && position.x < button.x + button.width && position.y > button.y && position.y < button.y + button.height;
 	}
 
 	resize() {
@@ -450,11 +457,17 @@ class UI {
 		this.display.shift();
 	}
 
+	checkHover(button, position) {
+		return position.x > button.x && position.x < button.x + button.width && position.y > button.y && position.y < button.y + button.height;
+	}
+
 	checkOverButton(position) {
 		for (let button in this.activeButtons) {
 			let over = this.checkHover(this.activeButtons[button], position);
 			if (over) {
-				this.activeButtons[button].hover();
+				if(!this.activeButtons[button].hovered) {
+					this.activeButtons[button].hover();
+				}
 			} else if (this.activeButtons[button].hovered) {
 				this.activeButtons[button].unhover();
 			}
@@ -465,8 +478,8 @@ class UI {
 		for (let button in this.activeButtons) {
 			let over = this.checkHover(this.activeButtons[button], position);
 			if (over) {
-				if (this.activeButtons[button].hovered) this.activeButtons[button].unhover();
 				this.activeButtons[button].function(this.activeButtons[button]);
+				this.activeButtons[button].resize(this.activeButtons[button]);
 				return true;
 			}
 		}
@@ -573,7 +586,9 @@ class UI {
 					if (xdis < 0) this.touchInterface.dir = 3;
 					else this.touchInterface.dir = 2;
 				}
-				if (this.clickButton(this.touchInterface.endPos)) return;
+				if (this.clickButton(this.touchInterface.endPos)) {
+					return;
+				}
 				if (this.state === "gamePlayUI") {
 					if (this.touchInterface.dist > this.currentLevel.size / 2) this.currentLevel.player.collide(this.touchInterface.dir);
 				}
