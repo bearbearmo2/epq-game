@@ -7,9 +7,8 @@
         {
             "type": "pwa-chrome",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
-            "url": "C:\\Users\\mosty\\OneDrive\\Documents\\GitHub\\epq-game\\index.html",
-            "webRoot": "${workspaceFolder}"
+            "name": "Launch Chrome",
+            "url": "http://epqdatabasetesting.infinityfreeapp.com/index.php",
         }
     ]
 }
