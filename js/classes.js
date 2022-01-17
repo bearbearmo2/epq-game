@@ -18,6 +18,8 @@ class UI {
 		this.activeButtons = {};
 		this.icons = {};
 		this.activeIcons = {};
+		this.animations = {};
+		this.activeAnimations = {};
 
 		this.buttons.leftButton = new Button("images/leftButton.png", () => { userInterface.previousLevel() }, (button) => {
 			button.width = screen.width / 10;
@@ -107,8 +109,18 @@ class UI {
 			icon.height = screen.height - screen.width / 10;
 			icon.x = screen.offsetLeft + screen.width / 20;
 			icon.y = screen.offsetTop + screen.width / 20;
-			icon.hovered = false
 		});
+
+		// this.animations.swipe = new Animation(60, 16, 16, 8, "images/hexagon.png", (anim) => {
+		// 	anim.width = screen.width - screen.width / 10;
+		// 	anim.height = screen.height - screen.width / 10;
+		// 	anim.x = screen.offsetLeft + screen.width / 20;
+		// 	anim.y = screen.offsetTop + screen.width / 20;
+		// });
+
+		// this.activeAnimations.swipe = this.animations.swipe;
+		
+		//example animation
 
 		this.createWorldButtons();
 	}
@@ -121,7 +133,7 @@ class UI {
 				this.buttons[[i, j]] = new Button(`images/num${j}.png`, (button) => {
 					this.world = i;
 					this.level = j;
-					this.display = ["stopMenu", "startTransition", "fadeout", "loadLevel", "blackout", "fadein", "stopTransition", "startGamePlay"];
+					this.display = ["startTransition", "fadeout", "loadLevel", "blackout", "fadein", "startGamePlay"];
 				}, (button) => {
 					button.width = screen.width / 7.5;
 					button.height = screen.width / 7.5;
@@ -293,6 +305,10 @@ class UI {
 
 		for (let icon in this.activeIcons) {
 			this.activeIcons[icon].resize(this.activeIcons[icon]);
+		}
+
+		for (let anim in this.activeAnimations) {
+			this.activeAnimations[anim].resize(this.activeAnimations[anim]);
 		}
 
 		this.currentLevel.resize();
@@ -494,6 +510,7 @@ class UI {
 				switch (event.key) {
 					case "ArrowLeft":
 					case "a":
+						console.log("a");
 						this.currentLevel.player.collide(3);
 						break;
 					case "ArrowRight":
@@ -518,6 +535,7 @@ class UI {
 						break;
 					case "q":
 						this.openSettings();
+						break;
 					default:
 						this.openControls();
 				}
@@ -548,7 +566,7 @@ class UI {
 						this.openControls();
 				}
 			} else if (this.state === "settingsUI") {
-
+				this.state = "gamePlayUI";
 			} else if (this.state === "controlsUI") {
 				switch (event.key) {
 					default:
@@ -562,6 +580,7 @@ class UI {
 				case "F":
 					if (this.fullscreen) this.exitFullscreen();
 					else this.enterFullscreen();
+					break;
 				default:
 			}
 		} else if (type === "touch") {
@@ -772,6 +791,10 @@ class UI {
 			let image = this.activeIcons[icon];
 			ctx.drawImage(image.image, image.x, image.y, image.width, image.height);
 		}
+		for (let anim in this.activeAnimations) {
+			let image = this.activeAnimations[anim];
+			image.update();
+		}
 		if (this.gamepadConnected) {
 			this.cursor.render();
 		}
@@ -848,28 +871,31 @@ class Cursor {
 }
 
 class Animation {
-	constructor(x, y, src, resize) {
-		this.x = x;
-		this.y = y;
+	constructor(speed, animWidth, animHeight, animLength, src, resize) {
+		this.x = 1;
+		this.y = 1;
 		this.width = 1;
 		this.height = 1;
 		this.image = new Image();
 		this.image.src = src;
+		this.animWidth = animWidth;
+		this.animHeight = animHeight;
+		this.animSpeed = speed;
+		this.animLength = animLength;
 		this.resize = resize;
-		this.tick = 0;
 		this.frame = 0;
 	}
 
 	update() {
-		if (!(this.tick % frames)) this.render();
-
-		this.tick++;
+		if (!(userInterface.tick % this.animSpeed)){
+				this.frame++;
+				if(this.frame === this.animLength) this.frame = 0;
+		}
+		this.render();
 	}
 
 	render() {
-		this.frame++;
-		ctx.drawImage(this.image, this.frame * this.size);
-		//ctx.drawImage(this.image, (this.size * 4 + this.dir) * 16, this.col * 16, 16, 16, this.x * this.parent.size + this.parent.offsetLeft, this.y * this.parent.size + this.parent.offsetTop, this.parent.size, this.parent.size);
+		ctx.drawImage(this.image, this.frame * this.animWidth, 0, this.animWidth, this.animHeight, this.x, this.y, this.width, this.height);
 	}
 }
 
