@@ -38,8 +38,15 @@ class UI {
 		this.buttons.resetButton = new Button("images/resetButton.png", () => { userInterface.currentLevel.reset() }, (button) => {
 			button.width = screen.width / 10;
 			button.height = screen.width / 10;
-			button.x = screen.offsetLeft + screen.width / 2 - screen.width / 50;
+			button.x = screen.offsetLeft + screen.width / 2 - screen.width / 20;
 			button.y = screen.height + screen.offsetTop - (screen.width / 20) * 3;
+			button.hovered = false
+		});
+		this.buttons.undoButton = new Button("images/undoButton.png", () => { userInterface.currentLevel.undo() }, (button) => {
+			button.width = screen.width / 10;
+			button.height = screen.width / 10;
+			button.x = screen.offsetLeft + screen.width / 2 - screen.width / 20;
+			button.y = screen.offsetTop + screen.width / 20;
 			button.hovered = false
 		});
 		this.buttons.menuButton = new Button("images/menuButton.png", () => {
@@ -119,7 +126,7 @@ class UI {
 		// });
 
 		// this.activeAnimations.swipe = this.animations.swipe;
-		
+
 		//example animation
 
 		this.createWorldButtons();
@@ -171,7 +178,7 @@ class UI {
 	}
 
 	gamePlayUI() {
-		if ([this.world, this.level - 1] in this.loadedLevels || [this.world - 1, 9] in this.loadedLevels) {
+		if ([this.world, this.level - 1] in this.loadedLevels || [this.world - 1, levels[this.world].length-1] in this.loadedLevels) {
 			if (!("leftButton" in this.activeButtons)) {
 				this.activeButtons.leftButton = this.buttons.leftButton;
 				this.activeButtons.leftButton.resize(this.activeButtons.leftButton);
@@ -181,7 +188,7 @@ class UI {
 				delete this.activeButtons.leftButton;
 			}
 		}
-		if ([this.world, this.level + 1] in this.loadedLevels || [this.world + 1, 1] in this.loadedLevels) {
+		if ([this.world, this.level + 1] in this.loadedLevels || [this.world + 1, 0] in this.loadedLevels) {
 			if (!("rightButton" in this.activeButtons)) {
 				this.activeButtons.rightButton = this.buttons.rightButton;
 				this.activeButtons.rightButton.resize(this.activeButtons.rightButton);
@@ -194,6 +201,10 @@ class UI {
 		if (!("resetButton" in this.activeButtons)) {
 			this.activeButtons.resetButton = this.buttons.resetButton;
 			this.activeButtons.resetButton.resize(this.activeButtons.resetButton);
+		}
+		if (!("undoButton" in this.activeButtons)) {
+			this.activeButtons.undoButton = this.buttons.undoButton;
+			this.activeButtons.undoButton.resize(this.activeButtons.undoButton);
 		}
 		if (!("menuButton" in this.activeButtons)) {
 			this.activeButtons.menuButton = this.buttons.menuButton;
@@ -536,6 +547,9 @@ class UI {
 					case "q":
 						this.openSettings();
 						break;
+					case "z":
+						this.currentLevel.undo();
+						break;
 					default:
 						this.openControls();
 				}
@@ -668,6 +682,9 @@ class UI {
 						break;
 					case "2":
 						this.currentLevel.reset();
+						break;
+					case "3":
+						this.currentLevel.undo();
 						break;
 					case "5":
 					case "7":
@@ -908,6 +925,7 @@ class Level {
 		this.layout = this.data.layout;
 		this.exit = this.data.exit;
 		this.level = this.parse();
+		this.path = [];
 		this.solved = false;
 		this.resize();
 	}
@@ -953,7 +971,86 @@ class Level {
 
 	reset() {
 		this.level = this.parse();
+		this.path = [];
 		this.solved = false;
+	}
+
+	undo() {
+		if(this.path.length === 0) return;
+		let state = this.path[this.path.length-1];
+		state = state.split(",");
+		state.pop();
+		state = state.map(x => x.split("_").map(y => y.split(".")));
+
+		this.level = {};
+
+		for(let tile of state){
+			let prev;
+			if(tile[0][0] === "Square"){
+				prev = new Square(parseInt(tile[0][1]), parseInt(tile[0][2]), this, parseInt(tile[0][3]), parseInt(tile[0][4]), parseInt(tile[0][5]));
+			} else if(tile[0][0] === "Hexagon"){
+				prev = new Hexagon(parseInt(tile[0][1]), parseInt(tile[0][2]), this, parseInt(tile[0][3]), parseInt(tile[0][4]), parseInt(tile[0][5]));
+			} else if(tile[0][0] === "Triangle"){
+				prev = new Triangle(parseInt(tile[0][1]), parseInt(tile[0][2]), this, parseInt(tile[0][3]), parseInt(tile[0][4]), parseInt(tile[0][5]));
+			} else {
+				prev = new Player(parseInt(tile[0][1]), parseInt(tile[0][2]), this);
+				this.player = prev;
+			}
+			if(tile[0][6]) prev.required = true;
+
+			this.level[[tile[0][1], tile[0][2]]] = prev;
+			for(let i = 1; i < tile.length; i++){
+				if(tile[i][0] === "Square"){
+					prev.contains = new Square(parseInt(tile[i][1]), parseInt(tile[i][2]), this, parseInt(tile[i][3]), parseInt(tile[i][4]), parseInt(tile[i][5]));
+				} else if(tile[i][0] === "Hexagon"){
+					prev.contains = new Hexagon(parseInt(tile[i][1]), parseInt(tile[i][2]), this, parseInt(tile[i][3]), parseInt(tile[i][4]), parseInt(tile[i][5]));
+				} else if(tile[i][0] === "Triangle"){
+					prev.contains = new Triangle(parseInt(tile[i][1]), parseInt(tile[i][2]), this, parseInt(tile[i][3]), parseInt(tile[i][4]), parseInt(tile[i][5]));
+				} else {
+					prev.contains = new Player(parseInt(tile[i][1]), parseInt(tile[i][2]), this);
+					this.player = prev.contains;
+				}
+				prev.contains.container = prev;
+				prev = prev.contains;
+				if(tile[i][6]) prev.required = true;
+			}
+		}
+		this.path.pop();
+	}
+
+	hashLevelSate() {
+		//create unique identification for game state
+		let hash = "";
+		for(let object in this.level){
+			hash += this.level[object].constructor.name + ".";
+			hash += this.level[object].x + ".";
+			hash += this.level[object].y + ".";
+			hash += this.level[object].hash + ".";
+			hash += this.level[object].required;
+			if(this.level[object].contains){
+				hash += "_";
+				hash += this.level[object].contains.constructor.name + ".";
+				hash += this.level[object].contains.x + ".";
+				hash += this.level[object].contains.y + ".";
+				hash += this.level[object].contains.hash + "."
+				hash += this.level[object].required;
+				if(this.level[object].contains.contains){
+					hash += "_";
+					hash += this.level[object].contains.contains.constructor.name + ".";
+					hash += this.level[object].contains.contains.x + ".";
+					hash += this.level[object].contains.contains.y + ".";
+					hash += this.level[object].contains.contains.hash
+				}
+			}
+			hash += ",";
+		}
+		return hash;
+	}
+
+	storeState() {
+		//store level state
+	  const state = this.hashLevelSate() 
+		this.path.push(state);
 	}
 
 	render() {
@@ -998,6 +1095,7 @@ class Object {
 		this.required = false;
 		this.container = null;
 		this.contains = null;
+		this.hash = `${this.size}.${this.dir}.${this.col}`;
 	}
 
 	update() {
@@ -1081,6 +1179,7 @@ class Player extends Object {
 		super(x, y, parent, 2);
 		this.image.src = "images/player.png"
 		this.required = true;
+		this.hash = "";
 	}
 
 	collide(dir) {
@@ -1106,6 +1205,8 @@ class Player extends Object {
 			this.parent.finish();
 		}
 		if(!inside) return;
+
+		this.parent.storeState();
 
 		let leaving = this.checkContainer(dir);
 
