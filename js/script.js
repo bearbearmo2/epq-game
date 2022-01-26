@@ -1,6 +1,8 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+const testAudio = new Audio();
+
 const screen = {offsetLeft:0, offsetTop:0, width:0, height:0, display:{offsetLeft:0, offsetTop:0, width:0, height:0}};
 
 const frames = 60;
@@ -8,9 +10,6 @@ const frames = 60;
 const userInterface = new UI();
 userInterface.level = 0;
 userInterface.world = 1;
-userInterface.currentLevel = new Level(userInterface.world, userInterface.level);
-userInterface.loadedLevels[[userInterface.world, userInterface.level]] = userInterface.currentLevel;
-userInterface.resize();
 
 function main(){
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -19,6 +18,7 @@ function main(){
 }
 
 function setup(){
+	userInterface.loadLevel();
 	resize();
 	main();
 }
@@ -26,7 +26,7 @@ function setup(){
 function resize(){
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
-	let screenSize = Math.min(window.innerWidth, window.innerHeight);
+	let screenSize = Math.min(window.innerWidth * userInterface.settings.size, window.innerHeight * userInterface.settings.size);
 	screen.height = screen.width = screenSize;
 	screen.offsetLeft = Math.floor((canvas.width - screen.width)/2);
 	screen.offsetTop = Math.floor((canvas.height - screen.height)/2);
