@@ -1,6 +1,6 @@
 front end:
 create level environment
-create movable player
+create moveable player
 create shapes
 move shapes
 move shapes into eachother

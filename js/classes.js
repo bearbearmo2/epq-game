@@ -32,7 +32,7 @@ class UI {
 			button.height = screen.width / 10;
 			button.x = screen.offsetLeft + screen.width / 50;
 			button.y = screen.height + screen.offsetTop - (screen.width / 20) * 3;
-			button.hovered = false
+			button.hovered = false;
 		});
 		this.buttons.rightButton = new Button("images/rightButton.png", () => { userInterface.nextLevel() }, (button) => {
 			button.width = screen.width / 10;
@@ -146,7 +146,7 @@ class UI {
 		});
 
 		this.sliders.sensitivity = new Slider([1, 10], this.settings.sensitivity, "sensitivity", (slider) => {
-			slider.width = screen.width/2 - screen.width/50;
+			slider.width = screen.width - (screen.height/10 * 1.2 * 3) - screen.width/25;
 			slider.height = screen.height/10;
 			slider.x = screen.offsetLeft + screen.width - slider.width - screen.width/50;
 			slider.y = screen.offsetTop + screen.height/5 + screen.height/10;
@@ -177,6 +177,13 @@ class UI {
 			button.y = screen.height + screen.offsetTop - (screen.width / 20) * 3;
 			button.hovered = false;
 		});
+
+		// this.icons.sensitivityText = new Icon("images/sensitivityText.png", (icon) => {
+		// 	icon.width = screen.width/4 * 3 - screen.width/50;
+		// 	icon.height = icon.width/12;
+		// 	icon.x = screen.offsetLeft;
+		// 	icon.y = screen.offsetTop + screen.height/5 + screen.height/10;
+		// });
 
 		this.createWorldButtons();
 		this.createWorldIcons();
@@ -388,6 +395,16 @@ class UI {
 		if (!("size" in this.activeSliders)) {
 			this.activeSliders.size = this.sliders.size;
 			this.activeSliders.size.resize(this.activeSliders.size);
+		}
+
+		let anims = uiAnims["settings"];
+
+		for(let anim in anims){
+			if (!(anim in this.activeAnimations)) {
+				this.activeAnimations[anim] = this.animations[anim];
+				this.activeAnimations[anim].resize = anims[anim];
+				this.activeAnimations[anim].resize(this.activeAnimations[anim]);
+			}
 		}
 
 		this.opacity = 0.8;
@@ -878,6 +895,7 @@ class UI {
 			switch (event) {
 				case "0":
 					this.clickButton({ x: this.cursor.x, y: this.cursor.y });
+					this.checkOverSlider(this.touchInterface.endPos);
 					break;
 			}
 		} else if (type === "gamepadAxes") {
@@ -1136,7 +1154,6 @@ class Level {
 				}
 				let data = layout[y][x].split(".");
 				out[[x, y]] = blockData[data[0]](x, y, this, parseInt(data[1]), parseInt(data[2]));
-				if (data[3]) out[[x, y]].required = true;
 			}
 		}
 		return out;
@@ -1188,7 +1205,6 @@ class Level {
 				prev = new Player(parseInt(tile[0][1]), parseInt(tile[0][2]), this);
 				this.player = prev;
 			}
-			if (tile[0][6]) prev.required = true;
 
 			this.level[[tile[0][1], tile[0][2]]] = prev;
 			for (let i = 1; i < tile.length; i++) {
@@ -1204,7 +1220,6 @@ class Level {
 				}
 				prev.contains.container = prev;
 				prev = prev.contains;
-				if (tile[i][6]) prev.required = true;
 			}
 		}
 		this.path.pop();
@@ -1217,15 +1232,13 @@ class Level {
 			hash += this.level[object].constructor.name + ".";
 			hash += this.level[object].x + ".";
 			hash += this.level[object].y + ".";
-			hash += this.level[object].hash + ".";
-			hash += this.level[object].required;
+			hash += this.level[object].hash
 			if (this.level[object].contains) {
 				hash += "_";
 				hash += this.level[object].contains.constructor.name + ".";
 				hash += this.level[object].contains.x + ".";
 				hash += this.level[object].contains.y + ".";
-				hash += this.level[object].contains.hash + "."
-				hash += this.level[object].required;
+				hash += this.level[object].contains.hash
 				if (this.level[object].contains.contains) {
 					hash += "_";
 					hash += this.level[object].contains.contains.constructor.name + ".";
@@ -1284,7 +1297,6 @@ class Object {
 		this.dir = direction;
 		this.col = colour;
 		this.image = new Image()
-		this.required = false;
 		this.container = null;
 		this.contains = null;
 		this.hash = `${this.size}.${this.dir}.${this.col}`;
@@ -1361,29 +1373,28 @@ class Object {
 class Triangle extends Object {
 	constructor(x, y, parent, size, direction, colour) {
 		super(x, y, parent, size, direction, colour);
-		this.image.src = "images/triangle.png"
+		this.image.src = "images/triangle.png";
 	}
 }
 
 class Square extends Object {
 	constructor(x, y, parent, size, direction, colour) {
 		super(x, y, parent, size, direction, colour);
-		this.image.src = "images/square.png"
+		this.image.src = "images/square.png";
 	}
 }
 
 class Hexagon extends Object {
 	constructor(x, y, parent, size, direction, colour) {
 		super(x, y, parent, size, direction, colour);
-		this.image.src = "images/hexagon.png"
+		this.image.src = "images/hexagon.png";
 	}
 }
 
 class Player extends Object {
 	constructor(x, y, parent) {
 		super(x, y, parent, 2);
-		this.image.src = "images/player.png"
-		this.required = true;
+		this.image.src = "images/player.png";
 		this.hash = "";
 	}
 
@@ -1445,8 +1456,15 @@ class Player extends Object {
 
 		if (this.container) {
 			if (this.container.container) {
-				if (this.container.container.required && this.container.required) {
-					this.parent.solved = true;
+				if (this.container.col) {
+					if(this.container.container.col === this.container.col) this.parent.solved = true;
+					else if(this.container.container.col === 4){
+						if(this.container.col === 1 || this.container.col === 3) this.parent.solved = true;
+					} else if(this.container.container.col === 5){
+						if(this.container.col === 2 || this.container.col === 3) this.parent.solved = true;
+					} else if(this.container.container.col === 6){
+						if(this.container.col === 1 || this.container.col === 2) this.parent.solved = true;
+					}
 				}
 			}
 		}
