@@ -218,56 +218,144 @@ const blockData = {
 	"T": (x, y, p, d, c) => new Triangle(x, y, p, 0, d, c),
 }
 
-const uiAnims = {
-	"keyboard":{},
+const uiComponents = {
+	"keyboard":{
+		"controls": {
+			"type": "Icons",
+		}
+	},
 	"mouse": {
-		"movement": (anim) => {
-			anim.width = (screen.width - screen.width/10) / 10 * 3;
-			anim.height =  (screen.width - screen.width/10) / 10;
-			anim.x = screen.offsetLeft + screen.width / 20;
-			anim.y = screen.offsetTop + screen.width / 20 + (screen.width - screen.width/10) / 10 * 3;
+		"movement": {
+			"resize": (anim) => {
+				anim.width = (screen.width - screen.width/10) / 10 * 3;
+				anim.height =  (screen.width - screen.width/10) / 10;
+				anim.x = screen.offsetLeft + screen.width / 20;
+				anim.y = screen.offsetTop + screen.width / 20 + (screen.width - screen.width/10) / 10 * 3;
+			},
+			"type": "Animations",
 		},
-		"drag": (anim) => {
-			anim.width = (screen.width - screen.width/10) / 10 * 3;
-			anim.height =  (screen.width - screen.width/10) / 10;
-			anim.x = screen.offsetLeft + screen.width / 20;
-			anim.y = screen.offsetTop + screen.width / 20 + (screen.width - screen.width/10) / 10 * 4;
+		"drag": {
+			"resize": (anim) => {
+				anim.width = (screen.width - screen.width/10) / 10 * 3;
+				anim.height =  (screen.width - screen.width/10) / 10;
+				anim.x = screen.offsetLeft + screen.width / 20;
+				anim.y = screen.offsetTop + screen.width / 20 + (screen.width - screen.width/10) / 10 * 4;
+			},
+			"type": "Animations",
+		},
+		"controls": {
+			"type": "Icons",
 		}
 	},
 	"gamepad": {
-		"movement": (anim) => {
-			anim.width = (screen.width - screen.width/10) / 10 * 3;
-			anim.height =  (screen.width - screen.width/10) / 10;
-			anim.x = screen.offsetLeft + screen.width / 20;
-			anim.y = screen.offsetTop + screen.width / 20 + (screen.width - screen.width/10) / 10 * 2;
+		"movement": {
+			"resize": (anim) => {
+				anim.width = (screen.width - screen.width/10) / 10 * 3;
+				anim.height =  (screen.width - screen.width/10) / 10;
+				anim.x = screen.offsetLeft + screen.width / 20;
+				anim.y = screen.offsetTop + screen.width / 20 + (screen.width - screen.width/10) / 10 * 2;
+			},
+			"type": "Animations",
 		},
-		"cursor": (anim) => {
-			anim.width = (screen.width - screen.width/10) / 10 * 4;
-			anim.height =  (screen.width - screen.width/10) / 10 * 2;
-			anim.x = screen.offsetLeft + screen.width / 20 * 6;
-			anim.y = screen.offsetTop + screen.width / 20 + (screen.width - screen.width/10) / 10 * 8;
+		"cursor": {
+			"resize": (anim) => {
+				anim.width = (screen.width - screen.width/10) / 10 * 4;
+				anim.height =  (screen.width - screen.width/10) / 10 * 2;
+				anim.x = screen.offsetLeft + screen.width / 20 * 6;
+				anim.y = screen.offsetTop + screen.width / 20 + (screen.width - screen.width/10) / 10 * 8;
+			},
+			"type": "Animations",
+		},
+		"controls": {
+			"type": "Icons",
 		}
 	},
 	"touch": {
-		"movement": (anim) => {
-			anim.width = (screen.width - screen.width/10);
-			anim.height = anim.width/3;
-			anim.x = screen.offsetLeft + screen.width / 20;
-			anim.y = screen.offsetTop + screen.width / 20 + anim.height/2;
+		"movement": {
+			"resize": (anim) => {
+				anim.width = (screen.width - screen.width/10);
+				anim.height = anim.width/3;
+				anim.x = screen.offsetLeft + screen.width / 20;
+				anim.y = screen.offsetTop + screen.width / 20 + anim.height/2;
+			},
+			"type": "Animations",
 		},
-		"drag": (anim) => {
-			anim.width = (screen.width - screen.width/10);
-			anim.height = anim.width/3;
-			anim.x = screen.offsetLeft + screen.width / 20;
-			anim.y = screen.offsetTop + screen.width / 20 + anim.height * 3/2;
+		"drag": {
+			"resize": (anim) => {
+				anim.width = (screen.width - screen.width/10);
+				anim.height = anim.width/3;
+				anim.x = screen.offsetLeft + screen.width / 20;
+				anim.y = screen.offsetTop + screen.width / 20 + anim.height * 3/2;
+			},
+			"type": "Animations",
+		},
+		"controls": {
+			"type": "Icons",
 		}
 	},
-	"settings": {
-		"drag":	(anim) => {
-			anim.height = screen.height/10 * 1.2;
-			anim.width = anim.height * 3;
-			anim.x = screen.offsetLeft + screen.width / 50;
-			anim.y = screen.offsetTop + screen.height/5 + screen.height/10 - screen.height/50;
+	"settingsUI": {
+		"drag":	{
+			"resize": (anim) => {
+				anim.height = screen.height/10 * 1.2;
+				anim.width = anim.height * 3;
+				anim.x = screen.offsetLeft + screen.width / 50;
+				anim.y = screen.offsetTop + screen.height/5 + screen.height/10 - screen.height/50;
+			},
+			"type": "Animations",
 		},
-	}
+		"menuButton":{
+			"type": "Buttons",
+		},
+		"fullScreenButton":{
+			"type": "Buttons",
+		},
+		"settingsButton":{
+			"type": "Buttons",
+		},
+		"resetSettingsButton":{
+			"type": "Buttons",
+		},
+		"volume":{
+			"type": "Icons",
+		},
+		"screensize":{
+			"type": "Icons",
+		},
+		"sensitivity":{
+			"type": "Sliders",
+		},
+		"audio":{
+			"type": "Sliders",
+		},
+		"size":{
+			"type": "Sliders",
+		},
+	},
+	"gamePlayUI": {
+		"resetButton":{
+			"type": "Buttons",
+		},
+		"undoButton":{
+			"type": "Buttons",
+		},
+		"menuButton":{
+			"type": "Buttons",
+		},
+		"controlsButton":{
+			"type": "Buttons",
+		},
+	},
+	"menuUI": {
+		"menuButton":{
+			"type": "Buttons",
+		},
+		"fullScreenButton":{
+			"type": "Buttons",
+		},
+	},
+	"startUI": {
+		"start":{
+			"type": "Icons",
+		},
+	},
 }
